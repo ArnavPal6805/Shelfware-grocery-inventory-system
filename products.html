@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Products — ShelfWare Admin</title>
+  <link href="../Soft-UI-Dashboard-Tailwind-1.0.0/build/assets/css/soft-ui-dashboard-tailwind.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <aside class="max-w-62.5 ease-nav-brand z-990 fixed inset-y-0 my-0 ml-0 w-64 flex-wrap items-center justify-between overflow-y-auto rounded-tr-2xl rounded-br-2xl border-0 p-0 shadow-soft-2xl">
+  <div class="h-19.5 p-4"><a class="block px-4 py-2 text-sm whitespace-nowrap text-white" href="admininterface.html" aria-hidden="true"></a></div>
+    <hr class="h-px mt-0 bg-transparent" />
+    <div class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full p-3">
+      <ul class="flex flex-col pl-0 mb-0">
+        <li class="w-full mb-2"><a href="admininterface.html" class="py-2.7 text-sm my-0 mx-2 flex items-center whitespace-nowrap px-3 rounded-lg text-white">Dashboard</a></li>
+        <li class="w-full mb-2"><a href="employees.html" class="py-2.7 text-sm my-0 mx-2 flex items-center whitespace-nowrap px-3 rounded-lg text-white">Employees</a></li>
+        <li class="w-full mb-2"><a href="products.html" class="py-2.7 text-sm my-0 mx-2 flex items-center whitespace-nowrap px-3 text-white">Products</a></li>
+        <li class="w-full mb-2"><a href="sales.html" class="py-2.7 text-sm my-0 mx-2 flex items-center whitespace-nowrap px-3 text-white">Sales</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="ml-0 xl:ml-64 content-wrapper">
+    <header class="header">
+      <div class="header-container container mx-auto px-6">
+  <div class="logo"><img src="logo.png" alt="ShelfWare"> <span>ShelfWare Admin</span></div>
+        <div class="admin-info"><div class="welcome-text">Welcome, Administrator</div> <a href="role_select.html" class="inline-flex items-center px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Logout</a></div>
+      </div>
+    </header>
+
+    <main class="main-container">
+      <h2 class="dashboard-title">Products</h2>
+      <p class="dashboard-subtitle">Manage products</p>
+
+      <div class="table-card" style="margin-top:1rem">
+        <div class="table-container" id="productsTable">
+          <div class="loading"><i class="fas fa-spinner"></i> Loading products...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+<script>
+async function loadProducts(){
+  const container = document.getElementById('productsTable');
+  try{
+    const r = await fetch('http://localhost:5000/admin/products');
+    const j = await r.json();
+    const rows = j.products || [];
+    if(rows.length===0){ container.innerHTML = '<div class="empty">No products</div>'; return; }
+    let html = '<table class="data-table"><thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Price</th></tr></thead><tbody>';
+    for(const p of rows){
+      const price = typeof p.price !== 'undefined' ? parseFloat(p.price||0).toFixed(2) : '0.00';
+      html += `<tr><td>${p.id}</td><td>${escapeHtml(p.name)}</td><td>${escapeHtml(p.category_name||'')}</td><td>$${price}</td></tr>`;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }catch(err){ container.innerHTML = '<div class="empty">Failed to load</div>'; }
+}
+loadProducts();
+
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+</script>
+</body>
+</html>

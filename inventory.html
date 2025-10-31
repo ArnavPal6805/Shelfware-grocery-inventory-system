@@ -1,0 +1,165 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShelfWare - Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: #f8f9fa; color: #333; line-height: 1.6; }
+        .header { background: linear-gradient(135deg, #2d5a27 0%, #388e3c 100%); color: #fff; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 20px rgba(0,0,0,.15); }
+        .header-container { max-width: 1400px; margin: 0 auto; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: .75rem; font-size: 1.5rem; font-weight: 700; color: #fff; }
+        .logo img { width: 45px; height: 45px; border-radius: 50%; box-shadow: 0 2px 10px rgba(0,0,0,.2); }
+        .admin-info { display: flex; align-items: center; gap: 1.5rem; }
+        .welcome-text { display: flex; align-items: center; gap: .5rem; padding: .75rem 1.25rem; background: rgba(255,255,255,.1); border-radius: 25px; }
+        .logout-btn { background: rgba(255,255,255,.1); color: #fff; border: none; padding: .75rem 1.5rem; border-radius: 25px; cursor: pointer; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: .5rem; transition: all .3s; }
+        .logout-btn:hover { background: rgba(255,255,255,.2); transform: translateY(-2px); }
+        .sidebar { width: 260px; background: #fff; position: fixed; left: 0; top: 73px; height: calc(100vh - 73px); box-shadow: 2px 0 20px rgba(0,0,0,.08); padding: 1.5rem 0; }
+        .sidebar-menu { list-style: none; padding: 0 1rem; }
+        .sidebar-menu li { margin-bottom: .5rem; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 1rem; padding: .875rem 1.25rem; color: #555; text-decoration: none; border-radius: 12px; transition: all .3s; font-weight: 500; }
+        .sidebar-menu a:hover { background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); color: #2d5a27; transform: translateX(5px); }
+        .sidebar-menu a.active { background: linear-gradient(135deg, #2d5a27 0%, #388e3c 100%); color: #fff; box-shadow: 0 4px 12px rgba(56,142,60,.3); }
+        .sidebar-menu a i { font-size: 1.1rem; width: 24px; text-align: center; }
+        .main-content { margin-left: 260px; padding: 2rem; min-height: calc(100vh - 73px); }
+        .content-wrapper { max-width: 1400px; margin: 0 auto; }
+        .page-header { margin-bottom: 2rem; }
+        .breadcrumb { display: flex; align-items: center; gap: .5rem; color: #888; font-size: .9rem; margin-bottom: 1rem; }
+        .breadcrumb a { color: #388e3c; text-decoration: none; }
+        .page-title { font-size: 2rem; font-weight: 700; color: #2d5a27; margin-bottom: .5rem; }
+        .page-subtitle { color: #666; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .kpi-card { background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,.08); transition: all .3s; position: relative; overflow: hidden; }
+        .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #2d5a27, #388e3c, #4caf50); }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+        .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+        .kpi-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: #fff; }
+        .kpi-icon.green { background: linear-gradient(135deg, #2d5a27 0%, #388e3c 100%); }
+        .kpi-icon.blue { background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%); }
+        .kpi-icon.orange { background: linear-gradient(135deg, #e65100 0%, #f57c00 100%); }
+        .kpi-label { color: #888; font-size: .875rem; font-weight: 500; text-transform: uppercase; }
+        .kpi-value { font-size: 2rem; font-weight: 700; color: #333; margin: .5rem 0; }
+        .kpi-trend { font-size: .875rem; }
+        .trend-badge { padding: .25rem .75rem; border-radius: 20px; font-weight: 500; font-size: .8rem; }
+        .trend-badge.success { background: #e8f5e9; color: #2d5a27; }
+        .trend-badge.warning { background: #fff3e0; color: #e65100; }
+        .trend-badge.danger { background: #ffebee; color: #c62828; }
+        .tabs-container { background: #fff; border-radius: 16px; padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+        .tabs { display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 2px solid #f0f0f0; flex-wrap: wrap; }
+        .tab { padding: .875rem 1.5rem; background: transparent; border: none; color: #666; font-weight: 500; cursor: pointer; transition: all .3s; border-bottom: 3px solid transparent; margin-bottom: -2px; font-family: inherit; }
+        .tab:hover { color: #388e3c; background: #f5f5f5; }
+        .tab.active { color: #2d5a27; border-bottom-color: #388e3c; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .table-container { padding: 1.5rem; overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+        .data-table thead { background: linear-gradient(135deg, #f8fdf8 0%, #e8f5e9 100%); }
+        .data-table th { padding: 1rem; text-align: left; font-weight: 600; color: #2d5a27; border-bottom: 2px solid #c8e6c9; }
+        .data-table td { padding: 1rem; border-bottom: 1px solid #f0f0f0; color: #555; }
+        .data-table tbody tr { transition: all .3s; }
+        .data-table tbody tr:hover { background: #f8fdf8; }
+        .badge { padding: .375rem .875rem; border-radius: 20px; font-size: .8rem; font-weight: 500; }
+        .badge-success { background: #e8f5e9; color: #2d5a27; }
+        .badge-warning { background: #fff3e0; color: #e65100; }
+        .badge-danger { background: #ffebee; color: #c62828; }
+        .text-center { text-align: center; }
+        .loading-spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #388e3c; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo"><img src="logo.png" alt="ShelfWare" onerror="this.style.display='none'"><span>ShelfWare - Inventory</span></div>
+            <div class="admin-info">
+                <div class="welcome-text"><i class="fas fa-user-shield"></i> Inventory Admin</div>
+                <a href="#" id="logoutLink" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </header>
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="admininterface.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="inventory.html" class="active"><i class="fas fa-boxes"></i> Inventory</a></li>
+            <li><a href="forecasting.html"><i class="fas fa-chart-bar"></i> Forecasting</a></li>
+            <li><a href="procurement.html"><i class="fas fa-shopping-cart"></i> Procurement</a></li>
+        </ul>
+    </aside>
+    <main class="main-content">
+        <div class="content-wrapper">
+            <div class="page-header">
+                <div class="breadcrumb"><a href="admininterface.html">Home</a><i class="fas fa-chevron-right"></i><span>Inventory</span></div>
+                <h1 class="page-title">Inventory Management</h1>
+                <p class="page-subtitle">Real-time stock levels, expiry tracking, and supplier overview</p>
+            </div>
+            <div class="kpi-grid">
+                <div class="kpi-card"><div class="kpi-header"><div><div class="kpi-label">Total Stock</div><div class="kpi-value" id="kpiTotalStock">-</div></div><div class="kpi-icon green"><i class="fas fa-cubes"></i></div></div><div class="kpi-trend"><span class="trend-badge success"><i class="fas fa-layer-group"></i> Units across catalog</span></div></div>
+                <div class="kpi-card"><div class="kpi-header"><div><div class="kpi-label">Expiring Soon</div><div class="kpi-value" id="kpiExpiring">-</div></div><div class="kpi-icon orange"><i class="fas fa-clock"></i></div></div><div class="kpi-trend"><span class="trend-badge warning"><i class="fas fa-hourglass-half"></i> Next 30 days</span></div></div>
+                <div class="kpi-card"><div class="kpi-header"><div><div class="kpi-label">Expired Batches</div><div class="kpi-value" id="kpiExpired">-</div></div><div class="kpi-icon orange"><i class="fas fa-triangle-exclamation"></i></div></div><div class="kpi-trend"><span class="trend-badge danger"><i class="fas fa-ban"></i> Needs action</span></div></div>
+                <div class="kpi-card"><div class="kpi-header"><div><div class="kpi-label">Suppliers</div><div class="kpi-value" id="kpiSuppliers">-</div></div><div class="kpi-icon blue"><i class="fas fa-truck"></i></div></div><div class="kpi-trend"><span class="trend-badge success"><i class="fas fa-handshake"></i> Active partners</span></div></div>
+            </div>
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab active" data-tab="stock"><i class="fas fa-warehouse"></i> Stock Levels</button>
+                    <button class="tab" data-tab="expiring"><i class="fas fa-clock"></i> Expiring Soon</button>
+                    <button class="tab" data-tab="expired"><i class="fas fa-ban"></i> Expired</button>
+                    <button class="tab" data-tab="suppliers"><i class="fas fa-truck"></i> Suppliers</button>
+                </div>
+                <div id="tab-stock" class="tab-content active">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Product</th><th>Category</th><th>Current Stock</th><th>Batches</th><th>Nearest Expiry</th><th>Price</th></tr></thead>
+                            <tbody id="stockTableBody"><tr><td colspan="6" class="text-center"><div class="loading-spinner"></div></td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="tab-expiring" class="tab-content">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Product</th><th>Category</th><th>Quantity</th><th>Expiry</th><th>Days Left</th><th>Supplier</th></tr></thead>
+                            <tbody id="expiringTableBody"><tr><td colspan="6" class="text-center"><div class="loading-spinner"></div></td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="tab-expired" class="tab-content">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Product</th><th>Category</th><th>Quantity</th><th>Expired On</th><th>Days Overdue</th><th>Supplier</th></tr></thead>
+                            <tbody id="expiredTableBody"><tr><td colspan="6" class="text-center"><div class="loading-spinner"></div></td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="tab-suppliers" class="tab-content">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead><tr><th>Supplier</th><th>Contact Info</th><th>Total Batches</th><th>Total Units Supplied</th></tr></thead>
+                            <tbody id="suppliersTableBody"><tr><td colspan="4" class="text-center"><div class="loading-spinner"></div></td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script>
+        let STOCK=[],EXPIRING={days_threshold:30,total_batches:0,expiring_items:[]},EXPIRED={total_batches:0,expired_items:[]},SUPPLIERS=[];
+        document.addEventListener('DOMContentLoaded',()=>{document.getElementById('logoutLink').addEventListener('click',e=>{e.preventDefault();try{localStorage.removeItem('employee')}catch(e){}window.location.href='role_select.html'});loadStockLevels();loadExpiring(30);loadExpired();loadSuppliers();document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)))});
+        function switchTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+t))}
+        async function loadStockLevels(){try{const r=await fetch('http://localhost:5000/inventory/stock-levels'),d=await r.json();STOCK=Array.isArray(d)?d:[];updateKpis();renderStock()}catch(e){console.error(e);document.getElementById('stockTableBody').innerHTML='<tr><td colspan="6" class="text-center" style="color:#c62828"><i class="fas fa-exclamation-triangle"></i> Failed to load</td></tr>'}}
+        async function loadExpiring(days){try{const r=await fetch('http://localhost:5000/inventory/expiring-soon?days='+days),d=await r.json();EXPIRING=d||EXPIRING;updateKpis();renderExpiring()}catch(e){console.error(e);document.getElementById('expiringTableBody').innerHTML='<tr><td colspan="6" class="text-center" style="color:#c62828"><i class="fas fa-exclamation-triangle"></i> Failed to load</td></tr>'}}
+        async function loadExpired(){try{const r=await fetch('http://localhost:5000/inventory/expired'),d=await r.json();EXPIRED=d||EXPIRED;updateKpis();renderExpired()}catch(e){console.error(e);document.getElementById('expiredTableBody').innerHTML='<tr><td colspan="6" class="text-center" style="color:#c62828"><i class="fas fa-exclamation-triangle"></i> Failed to load</td></tr>'}}
+        async function loadSuppliers(){try{const r=await fetch('http://localhost:5000/suppliers'),d=await r.json();SUPPLIERS=Array.isArray(d)?d:[];updateKpis();renderSuppliers()}catch(e){console.error(e);document.getElementById('suppliersTableBody').innerHTML='<tr><td colspan="4" class="text-center" style="color:#c62828"><i class="fas fa-exclamation-triangle"></i> Failed to load</td></tr>'}}
+        function updateKpis(){const t=STOCK.reduce((s,p)=>s+(p.current_stock||0),0);setText('kpiTotalStock',t.toLocaleString());setText('kpiExpiring',(EXPIRING.total_batches||0).toLocaleString());setText('kpiExpired',(EXPIRED.total_batches||0).toLocaleString());setText('kpiSuppliers',SUPPLIERS.length.toLocaleString())}
+        function renderStock(){const rows=STOCK.map(p=>{const n=p.nearest_expiry?new Date(p.nearest_expiry).toLocaleDateString():'—',d=p.nearest_expiry?daysUntil(p.nearest_expiry):null,b=d===null?'':d<0?'<span class="badge badge-danger">Expired</span>':d<=30?'<span class="badge badge-warning">'+d+'d</span>':'<span class="badge badge-success">'+d+'d</span>';return '<tr><td>'+escapeHtml(p.product_name)+'</td><td>'+escapeHtml(p.category||'—')+'</td><td>'+(p.current_stock||0).toLocaleString()+'</td><td>'+(p.batch_count||0).toLocaleString()+'</td><td>'+n+' '+b+'</td><td>$'+Number(p.price||0).toFixed(2)+'</td></tr>'});document.getElementById('stockTableBody').innerHTML=rows.length?rows.join(''):'<tr><td colspan="6" class="text-center">No data</td></tr>'}
+        function renderExpiring(){const items=EXPIRING.expiring_items||[],rows=items.map(x=>'<tr><td>'+escapeHtml(x.product_name)+'</td><td>'+escapeHtml(x.category)+'</td><td>'+(x.quantity||0).toLocaleString()+'</td><td>'+(x.expiry_date?new Date(x.expiry_date).toLocaleDateString():'—')+'</td><td>'+badgeForDays(x.days_until_expiry)+'</td><td>'+escapeHtml(x.supplier)+'</td></tr>');document.getElementById('expiringTableBody').innerHTML=rows.length?rows.join(''):'<tr><td colspan="6" class="text-center">No items</td></tr>'}
+        function renderExpired(){const items=EXPIRED.expired_items||[],rows=items.map(x=>'<tr><td>'+escapeHtml(x.product_name)+'</td><td>'+escapeHtml(x.category)+'</td><td>'+(x.quantity||0).toLocaleString()+'</td><td>'+(x.expiry_date?new Date(x.expiry_date).toLocaleDateString():'—')+'</td><td><span class="badge badge-danger">'+Math.abs(x.days_expired||0)+'d</span></td><td>'+escapeHtml(x.supplier)+'</td></tr>');document.getElementById('expiredTableBody').innerHTML=rows.length?rows.join(''):'<tr><td colspan="6" class="text-center">No items</td></tr>'}
+        function renderSuppliers(){const rows=SUPPLIERS.map(s=>'<tr><td>'+escapeHtml(s.supplier_name)+'</td><td>'+escapeHtml(s.contact_info||'—')+'</td><td>'+(s.total_batches||0).toLocaleString()+'</td><td>'+(s.total_units_supplied||0).toLocaleString()+'</td></tr>');document.getElementById('suppliersTableBody').innerHTML=rows.length?rows.join(''):'<tr><td colspan="4" class="text-center">No suppliers</td></tr>'}
+        function setText(id,val){const el=document.getElementById(id);if(el)el.textContent=val}
+        function escapeHtml(str){if(str==null)return '';return String(str).replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
+        function daysUntil(dateStr){const today=new Date(),d=new Date(dateStr);return Math.ceil((d-today)/(1000*60*60*24))}
+        function badgeForDays(days){if(days==null)return '—';if(days<0)return '<span class="badge badge-danger">Expired</span>';if(days<=7)return '<span class="badge badge-danger">'+days+'d</span>';if(days<=14)return '<span class="badge badge-warning">'+days+'d</span>';return '<span class="badge badge-success">'+days+'d</span>'}
+    </script>
+</body>
+</html>

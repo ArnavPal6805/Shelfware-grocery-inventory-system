@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: url('shelfware.png') center/cover no-repeat;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(232, 245, 233, 0.3);
+            z-index: 0;
+        }
+        .login-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255,255,255,0.85);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(76,175,80,0.15);
+            padding: 40px 32px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+        .logo {
+            margin-bottom: 16px;
+        }
+        .logo img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.15);
+        }
+        h2 {
+            color: #388e3c;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #43a047;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #388e3c;
+        }
+        .links {
+            margin-top: 18px;
+            font-size: 14px;
+        }
+        .links a {
+            color: #43a047;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="login-container">
+        <div class="logo">
+            <img src="logo.png" alt="Customer Logo">
+        </div>
+        <h2>Customer Login</h2>
+        <form id="customerLoginForm">
+            <input type="text" id="customerUsername" placeholder="Customer Username" required>
+            <input type="password" id="customerPassword" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <div class="error-message" id="loginError"></div>
+        <div class="links">
+            <a href="signup.html">New customer? Sign up</a>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('customerLoginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('customerUsername').value.trim();
+        const password = document.getElementById('customerPassword').value;
+        
+        fetch('http://localhost:5000/customer-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        })
+        .then(async res => {
+            if (!res.ok) {
+                document.getElementById('loginError').textContent = 'Invalid username or password!';
+                document.getElementById('loginError').style.display = 'block';
+                return;
+            }
+
+            // Parse JSON response from server
+            let data = null;
+            try {
+                data = await res.json();
+            } catch (e) {
+                // If parsing fails, fall back to using provided username
+                data = null;
+            }
+
+            // Set flags compatible with the main customer interface
+            try { localStorage.setItem('shelfware_customer_logged_in', 'true'); } catch(e) {}
+            try { sessionStorage.setItem('shelfware_just_logged_in', 'true'); } catch(e) {}
+
+            // Store the customer's ID and display name returned by the server (prefer FirstName LastName)
+            try {
+                if (data && data.customer) {
+                    const cust = data.customer;
+                    try { localStorage.setItem('shelfware_customer_id', String(cust.customerId)); } catch (e) {}
+                    const displayName = (cust.first_name || '') + (cust.last_name ? (' ' + cust.last_name) : '');
+                    localStorage.setItem('shelfware_customer_name', displayName || username);
+                } else {
+                    localStorage.setItem('shelfware_customer_name', username);
+                }
+            } catch (e) {
+                try { localStorage.setItem('shelfware_customer_name', username); } catch(e) {}
+            }
+
+            // If there is a saved post-login action, resume it
+            try {
+                const post = localStorage.getItem('shelfware_post_login_action');
+                if (post) {
+                    try {
+                        const { action, payload } = JSON.parse(post);
+                        // Clear saved action
+                        localStorage.removeItem('shelfware_post_login_action');
+                        // Build a robust base URL that works for file:// and http(s)
+                        try {
+                            const base = location.href.substring(0, location.href.lastIndexOf('/') + 1);
+                            const target = base + 'customerinterface.html#resume=' + encodeURIComponent(action);
+                            console.log('Redirecting to:', target);
+                            window.location.assign(target);
+                        } catch (e) {
+                            // fallback
+                            window.location.assign(`customerinterface.html#resume=${encodeURIComponent(action)}`);
+                        }
+                        return;
+                    } catch (e) {
+                        // fallback to main interface
+                    }
+                }
+            } catch (e) {
+                // ignore storage read errors
+            }
+
+            // Default redirect to main interface (robust)
+            try {
+                const base = location.href.substring(0, location.href.lastIndexOf('/') + 1);
+                const target = base + 'customerinterface.html';
+                console.log('Redirecting to:', target);
+                window.location.assign(target);
+            } catch (e) {
+                window.location.assign('customerinterface.html');
+            }
+        })
+        .catch(err => {
+            console.error('Network/login error:', err);
+            const el = document.getElementById('loginError');
+            el.textContent = 'Network or server error occurred. Check server logs.';
+            el.style.display = 'block';
+        });
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShelfWare - Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="admin-modern.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="logo.png" alt="ShelfWare">
+                <span>Shelfware-Admin Dashboard</span>
+            </div>
+            
+            <div class="admin-info">
+                <div class="welcome-text">
+                    <i class="fas fa-user-shield"></i>
+                    Welcome, Administrator
+                </div>
+                <a href="#" id="logoutLink" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="admininterface.html" class="active"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="inventory.html"><i class="fas fa-boxes"></i> Inventory</a></li>
+            <li><a href="forecasting.html"><i class="fas fa-chart-bar"></i> Forecasting</a></li>
+            <li><a href="procurement.html"><i class="fas fa-shopping-cart"></i> Procurement</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="content-wrapper">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="breadcrumb">
+                    <a href="admininterface.html">Home</a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span>Dashboard</span>
+                </div>
+                <h1 class="page-title">Business Intelligence Dashboard</h1>
+                <p class="page-subtitle">Real-time insights and analytics for ShelfWare operations</p>
+            </div>
+
+            <!-- KPI Grid -->
+            <div class="kpi-grid" id="statsGrid">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading dashboard statistics...</p>
+            </div>
+        </div>
+
+            <!-- Charts Section -->
+            <div class="grid-2">
+                <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Revenue Trends</h3>
+                </div>
+                    <div class="chart-wrapper">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+                <div class="chart-container">
+                <div class="chart-header">
+                    <h3 class="chart-title">Sales by Category</h3>
+                </div>
+                    <div class="chart-wrapper">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+            <!-- Tables Section -->
+            <div class="table-container">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-users"></i> Employee Management</h3>
+                </div>
+                <div id="employeesTableContainer">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading employees...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-box"></i> Product Management</h3>
+                </div>
+                <div id="productsTableContainer">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading products...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-shopping-cart"></i> Recent Sales</h3>
+                </div>
+                <div id="salesTableContainer">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading sales data...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Logout functionality
+        document.getElementById('logoutLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            try { localStorage.removeItem('employee'); } catch(e) {}
+            window.location.href = 'role_select.html';
+        });
+
+        // Global variables
+        let revenueChart, categoryChart;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+        });
+
+        // Load all dashboard data
+        async function loadDashboardData() {
+            try {
+                // Load stats
+                await loadDashboardStats();
+                
+                // Load employees
+                await loadEmployees();
+                
+                // Load products
+                await loadProducts();
+                
+                // Load recent sales
+                await loadRecentSales();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('http://localhost:5000/admin/dashboard-stats');
+                const data = await response.json();
+                
+                displayStats(data);
+                createCharts(data);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error loading statistics. Please ensure the API server is running.
+                    </div>
+                `;
+            }
+        }
+
+        // Display statistics cards
+        function displayStats(data) {
+            const statsGrid = document.getElementById('statsGrid');
+            const counts = data.counts;
+            
+            statsGrid.innerHTML = `
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div>
+                                <div class="kpi-label">Total Employees</div>
+                                <div class="kpi-value">${counts.employees.toLocaleString()}</div>
+                            </div>
+                            <div class="kpi-icon green">
+                                <i class="fas fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-trend">
+                            <span class="trend-badge success"><i class="fas fa-users"></i> Active workforce</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div>
+                                <div class="kpi-label">Total Customers</div>
+                                <div class="kpi-value">${counts.customers.toLocaleString()}</div>
+                            </div>
+                            <div class="kpi-icon blue">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-trend trend-up">
+                            <i class="fas fa-arrow-up"></i> Growing customer base
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div>
+                                <div class="kpi-label">Products Catalog</div>
+                                <div class="kpi-value">${counts.products.toLocaleString()}</div>
+                            </div>
+                            <div class="kpi-icon orange">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-trend">
+                            <span class="trend-badge success"><i class="fas fa-layer-group"></i> ${counts.categories} categories</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div>
+                                <div class="kpi-label">Total Sales</div>
+                                <div class="kpi-value">${counts.sales.toLocaleString()}</div>
+                            </div>
+                            <div class="kpi-icon purple">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-trend trend-up">
+                            <i class="fas fa-chart-line"></i> Strong performance
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div>
+                                <div class="kpi-label">Total Revenue</div>
+                                <div class="kpi-value">$${data.revenue.total.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</div>
+                            </div>
+                            <div class="kpi-icon green">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-trend trend-up">
+                            <i class="fas fa-trending-up"></i> All-time revenue
+                        </div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-header">
+                            <div>
+                                <div class="kpi-label">Cities Served</div>
+                                <div class="kpi-value">${counts.cities.toLocaleString()}</div>
+                            </div>
+                            <div class="kpi-icon blue">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                        </div>
+                        <div class="kpi-trend trend-up">
+                            <i class="fas fa-globe"></i> Wide coverage
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create charts
+        function createCharts(data) {
+            createRevenueChart(data.revenue.monthly_trend);
+            createCategoryChart(data.category_sales);
+        }
+
+        // Create revenue trend chart
+        function createRevenueChart(monthlyTrend) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            if (revenueChart) {
+                revenueChart.destroy();
+            }
+            
+            const labels = monthlyTrend.map(item => {
+                const date = new Date(item.month + '-01');
+                return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+            });
+            
+            const revenues = monthlyTrend.map(item => item.revenue);
+            
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: revenues,
+                            borderColor: '#388e3c',
+                            backgroundColor: 'rgba(56, 142, 60, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#2d5a27',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                            pointRadius: 5,
+                            pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                        animation: { duration: 800, easing: 'easeOutQuart' },
+                    plugins: {
+                            legend: { 
+                                display: true,
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 15,
+                                    font: { size: 12, weight: '500' }
+                                }
+                            },
+                            tooltip: { 
+                                backgroundColor: 'rgba(45, 90, 39, 0.95)', 
+                                titleColor: '#fff', 
+                                bodyColor: '#e8f5e9', 
+                                usePointStyle: true,
+                                padding: 12,
+                                borderColor: '#388e3c',
+                                borderWidth: 1
+                            }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                                ticks: { 
+                                    callback: function(value){ return '$' + value.toLocaleString(); },
+                                    font: { size: 11 }
+                                },
+                                grid: { color: 'rgba(0,0,0,0.05)' }
+                        },
+                            x: { 
+                                grid: { display: false },
+                                ticks: { font: { size: 11 } }
+                            }
+                    }
+                }
+            });
+        }
+
+        // Create category sales chart
+        function createCategoryChart(categorySales) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+
+            if (categoryChart) { categoryChart.destroy(); }
+
+            const labels = categorySales.slice(0, 8).map(item => item.category);
+            const sales = categorySales.slice(0, 8).map(item => item.sold);
+
+                const colors = ['#2d5a27','#388e3c','#4caf50','#66bb6a','#81c784','#a5d6a7','#c8e6c9','#e8f5e9'];
+
+            categoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                    data: { 
+                        labels: labels, 
+                        datasets: [{ 
+                            data: sales, 
+                            backgroundColor: colors, 
+                            borderWidth: 3,
+                            borderColor: '#fff',
+                            hoverOffset: 12,
+                            hoverBorderWidth: 4
+                        }] 
+                    },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 800, easing: 'easeOutQuad' },
+                    plugins: {
+                            legend: { 
+                                position: 'bottom', 
+                                labels: { 
+                                    usePointStyle: true, 
+                                    padding: 15, 
+                                    boxWidth: 12, 
+                                    font: { size: 12, weight: '500' }
+                                } 
+                            },
+                            tooltip: { 
+                                backgroundColor: 'rgba(45, 90, 39, 0.95)', 
+                                titleColor: '#fff', 
+                                bodyColor: '#e8f5e9',
+                                padding: 12,
+                                borderColor: '#388e3c',
+                                borderWidth: 1
+                            }
+                    }
+                }
+            });
+        }
+
+        // Load employees
+        async function loadEmployees() {
+            try {
+                const response = await fetch('http://localhost:5000/admin/employees');
+                const data = await response.json();
+                
+                displayEmployees(data.employees);
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                document.getElementById('employeesTableContainer').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error loading employees
+                    </div>
+                `;
+            }
+        }
+
+        // Display employees table
+        function displayEmployees(employees) {
+            const container = document.getElementById('employeesTableContainer');
+            
+            const tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Gender</th>
+                            <th>City</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${employees.map(emp => `
+                            <tr>
+                                <td>${emp.id}</td>
+                                <td>${emp.first_name} ${emp.middle_initial ? emp.first_name + ' ' + emp.middle_initial + ' ' + emp.last_name : emp.first_name + ' ' + emp.last_name}</td>
+                                <td>${emp.email}</td>
+                                <td>${emp.gender}</td>
+                                <td>${emp.city_name}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        // Load products
+        async function loadProducts() {
+            try {
+                const response = await fetch('http://localhost:5000/admin/products');
+                const data = await response.json();
+                
+                displayProducts(data.products);
+            } catch (error) {
+                console.error('Error loading products:', error);
+                document.getElementById('productsTableContainer').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error loading products
+                    </div>
+                `;
+            }
+        }
+
+        // Display products table
+        function displayProducts(products) {
+            const container = document.getElementById('productsTableContainer');
+            
+            const tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Discontinued</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${products.map(product => `
+                            <tr>
+                                <td>${product.id}</td>
+                                <td>${product.name}</td>
+                                <td>${product.category_name}</td>
+                                <td>$${(product.price!=null)?parseFloat(product.price).toFixed(2):'0.00'}</td>
+                                <td>${product.discontinued ? 'Yes' : 'No'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+
+        // Load recent sales
+        async function loadRecentSales() {
+            try {
+                const response = await fetch('http://localhost:5000/admin/recent-sales?limit=100');
+                const data = await response.json();
+                
+                displayRecentSales(data.sales);
+            } catch (error) {
+                console.error('Error loading sales:', error);
+                document.getElementById('salesTableContainer').innerHTML = `
+                    <div class="error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error loading sales data
+                    </div>
+                `;
+            }
+        }
+
+        // Display recent sales table
+        function displayRecentSales(sales) {
+            const container = document.getElementById('salesTableContainer');
+            
+            const tableHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Sale ID</th>
+                            <th>Date</th>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Amount</th>
+                            <th>City</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${sales.map(sale => `
+                            <tr>
+                                <td>${sale.sale_id}</td>
+                                <td>${new Date(sale.sale_date).toLocaleDateString()}</td>
+                                <td title="${sale.product_name}">${sale.product_name.length > 25 ? sale.product_name.substring(0, 25) + '...' : sale.product_name}</td>
+                                <td>${sale.quantity}</td>
+                                <td>$${sale.total_amount.toFixed(2)}</td>
+                                <td>${sale.city}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            
+            container.innerHTML = tableHTML;
+        }
+    </script>
+</body>
+</html>

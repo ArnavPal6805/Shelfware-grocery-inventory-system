@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShelfWare - Smart Procurement</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Poppins',sans-serif;background:#f8f9fa;color:#333;line-height:1.6}
+        /* Header */
+        .header{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%);color:#fff;position:sticky;top:0;z-index:1000;box-shadow:0 2px 20px rgba(0,0,0,.15)}
+        .header-container{max-width:1400px;margin:0 auto;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center}
+        .logo{display:flex;align-items:center;gap:.75rem;font-size:1.5rem;font-weight:700;color:#fff}
+        .logo img{width:45px;height:45px;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+        .admin-info{display:flex;align-items:center;gap:1.5rem}
+        .welcome-text{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:rgba(255,255,255,.12);border-radius:25px}
+        .logout-btn{background:rgba(255,255,255,.12);color:#fff;border:none;padding:.6rem 1.25rem;border-radius:25px;cursor:pointer;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:.5rem;transition:all .2s}
+        .logout-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-2px)}
+        /* Sidebar */
+        .sidebar{width:260px;background:#fff;position:fixed;left:0;top:73px;height:calc(100vh - 73px);box-shadow:2px 0 20px rgba(0,0,0,.08);padding:1.5rem 0}
+        .sidebar-menu{list-style:none;padding:0 1rem}
+        .sidebar-menu li{margin-bottom:.5rem}
+        .sidebar-menu a{display:flex;align-items:center;gap:1rem;padding:.875rem 1.25rem;color:#555;text-decoration:none;border-radius:12px;transition:all .3s;font-weight:500}
+        .sidebar-menu a:hover{background:linear-gradient(135deg,#e8f5e9 0%,#c8e6c9 100%);color:#2d5a27;transform:translateX(5px)}
+        .sidebar-menu a.active{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%);color:#fff;box-shadow:0 4px 12px rgba(56,142,60,.3)}
+        .sidebar-menu a i{font-size:1.1rem;width:24px;text-align:center}
+        /* Main */
+        .main-content{margin-left:260px;padding:2rem;min-height:calc(100vh - 73px)}
+        .content-wrapper{max-width:1400px;margin:0 auto}
+        .page-header{margin-bottom:1.25rem}
+        .breadcrumb{display:flex;align-items:center;gap:.5rem;color:#888;font-size:.9rem}
+        .breadcrumb a{color:#388e3c;text-decoration:none}
+        .page-title{font-size:2rem;font-weight:800;color:#2d5a27;margin:.25rem 0}
+        .page-subtitle{color:#666}
+        /* KPI */
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1rem 0 1.25rem}
+        .kpi-card{background:#fff;border-radius:16px;padding:1rem 1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:all .3s;position:relative;overflow:hidden}
+        .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#2d5a27,#388e3c,#4caf50)}
+        .kpi-card:hover{transform:translateY(-5px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+        .kpi-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.5rem}
+        .kpi-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff}
+        .kpi-icon.green{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%)}
+        .kpi-icon.red{background:linear-gradient(135deg,#c62828 0%,#e53935 100%)}
+        .kpi-icon.orange{background:linear-gradient(135deg,#e65100 0%,#f57c00 100%)}
+        .kpi-icon.blue{background:linear-gradient(135deg,#1565c0 0%,#1976d2 100%)}
+        .kpi-label{color:#888;font-size:.78rem;text-transform:uppercase;font-weight:700}
+        .kpi-value{font-size:1.6rem;font-weight:800;color:#333}
+        .kpi-trend{font-size:.82rem;color:#666}
+        .trend-badge{padding:.25rem .6rem;border-radius:20px;background:#e8f5e9;color:#2d5a27;font-weight:600;font-size:.75rem}
+        /* Action bar */
+        .action-bar{display:flex;gap:1rem;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;padding:1rem 1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem}
+        .filter-group{display:flex;gap:.75rem;align-items:center;flex-wrap:wrap}
+        select#priorityFilter{border:1px solid #dcefdc;border-radius:10px;padding:.6rem .9rem;background:#fff;font-family:inherit}
+        .btn-primary{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%);color:#fff;border:none;border-radius:12px;padding:.6rem 1rem;cursor:pointer;font-weight:700;box-shadow:0 4px 12px rgba(56,142,60,.25);transition:all .2s}
+        .btn-primary:hover{transform:translateY(-2px)}
+        .btn-success{background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%);color:#fff;border:none;border-radius:12px;padding:.6rem 1rem;cursor:pointer;font-weight:700;box-shadow:0 4px 12px rgba(27,94,32,.25)}
+        .btn-secondary{background:#f1f8f1;color:#2d5a27;border:1px solid #c8e6c9;border-radius:10px;padding:.55rem .9rem;cursor:pointer;font-weight:700}
+        .btn-danger{background:#c62828;color:#fff;border:none;border-radius:10px;padding:.55rem .9rem;cursor:pointer;font-weight:700}
+        .btn-icon{background:#fff;border:1px solid #eaeaea;border-radius:10px;padding:.45rem .6rem;cursor:pointer}
+        /* Cards + Charts */
+        .card{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem}
+        .card-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #f0f0f0}
+        .card-header h2{font-size:1.1rem;color:#2d5a27}
+        .chart-grid{display:grid;grid-template-columns:1fr 2fr;gap:1rem;margin-bottom:1rem}
+        .chart-container{position:relative;height:300px;padding:1rem}
+        /* Table */
+        .table-responsive{width:100%;overflow:auto}
+        table.data-table{width:100%;border-collapse:collapse}
+        .data-table thead{background:linear-gradient(135deg,#f8fdf8 0%,#e8f5e9 100%)}
+        .data-table th{padding:1rem;text-align:left;font-weight:700;color:#2d5a27;border-bottom:2px solid #c8e6c9}
+        .data-table td{padding:1rem;border-bottom:1px solid #f0f0f0;color:#555;vertical-align:top}
+        .data-table tbody tr:hover{background:#f8fdf8}
+        .loading{padding:.9rem;text-align:center;color:#777}
+        .no-data{padding:1rem;text-align:center;color:#2d5a27;background:#f1f8f1;border-radius:8px}
+        /* Badges */
+        .badge{padding:.35rem .75rem;border-radius:20px;background:#f1f8f1;color:#2d5a27;font-size:.8rem;font-weight:700}
+        .priority-badge{padding:.3rem .6rem;border-radius:14px;color:#fff;font-weight:700;font-size:.8rem;display:inline-flex;gap:.4rem;align-items:center}
+        .priority-high{background:#d62828}
+        .priority-medium{background:#ffa726}
+        .priority-low{background:#4facfe}
+        .stock-badge{background:#e8f5e9;color:#2d5a27;padding:.25rem .6rem;border-radius:6px;font-weight:700}
+        .order-badge{background:#e3f2fd;color:#1565c0;padding:.25rem .6rem;border-radius:6px;font-weight:700}
+        .status-badge{padding:.25rem .6rem;border-radius:6px;font-weight:700}
+        .status-pending{background:#fff3e0;color:#e65100}
+        .status-approved{background:#e8f5e9;color:#2d5a27}
+        .status-dismissed{background:#ffebee;color:#c62828}
+        /* Alerts */
+        #alertBanner{margin:.75rem 0}
+        .alert{border-radius:12px;padding:.8rem 1rem;margin-bottom:.6rem;display:flex;gap:.6rem;align-items:center}
+        .alert-danger{background:#ffebee;color:#c62828;border:1px solid #ffcdd2}
+        .alert-success{background:#e8f5e9;color:#2d5a27;border:1px solid #c8e6c9}
+        /* Bulk actions */
+        .bulk-actions-bar{position:fixed;left:260px;right:0;bottom:0;background:#fff;border-top:1px solid #eee;box-shadow:0 -2px 12px rgba(0,0,0,.06)}
+        .bulk-actions-content{max-width:1400px;margin:0 auto;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between}
+        /* Modal */
+        .modal{display:none;position:fixed;z-index:2000;left:0;top:0;width:100%;height:100%;overflow:auto;background:rgba(0,0,0,.35)}
+        .modal-content{background:#fff;margin:8% auto;border-radius:16px;box-shadow:0 6px 24px rgba(0,0,0,.15);max-width:860px}
+        .modal-header,.modal-footer{padding:1rem 1.25rem;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}
+        .modal-footer{border-top:1px solid #f0f0f0;border-bottom:none}
+        .modal-body{padding:1rem 1.25rem}
+        .close{cursor:pointer;font-size:1.5rem}
+        .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+        .detail-section{border:1px solid #f0f0f0;border-radius:12px;padding:.9rem;background:#fafafa}
+        .detail-row{display:flex;justify-content:space-between;margin:.35rem 0;color:#444}
+        .detail-label{color:#666}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo"><img src="logo.png" alt="ShelfWare" onerror="this.style.display='none'"> <span>ShelfWare</span></div>
+            <div class="admin-info">
+                <div class="welcome-text"><i class="fas fa-shopping-cart"></i> Procurement</div>
+                <span class="badge" id="cartBadge" title="Orders placed">Orders Placed: 0</span>
+                <a href="#" id="logoutLink" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </header>
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="admininterface.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="inventory.html"><i class="fas fa-boxes"></i> Inventory</a></li>
+            <li><a href="forecasting.html"><i class="fas fa-chart-bar"></i> Forecasting</a></li>
+            <li><a href="procurement.html" class="active"><i class="fas fa-shopping-cart"></i> Procurement</a></li>
+        </ul>
+    </aside>
+    <main class="main-content">
+        <div class="content-wrapper">
+            <div class="page-header">
+                <div class="breadcrumb"><a href="admininterface.html">Home</a><i class="fas fa-chevron-right"></i><span>Procurement</span></div>
+                <h1 class="page-title"><i class="fas fa-shopping-cart"></i> Smart Procurement</h1>
+                <p class="page-subtitle">AI-powered reorder recommendations and stock optimization</p>
+            </div>
+
+            <div id="alertBanner"></div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">Total Recommendations</div>
+                            <div class="kpi-value" id="totalRecommendations">—</div>
+                        </div>
+                        <div class="kpi-icon green"><i class="fas fa-list"></i></div>
+                    </div>
+                    <div class="kpi-trend"><span class="trend-badge"><i class="fas fa-clock"></i> Pending actions</span></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">High Priority</div>
+                            <div class="kpi-value" id="highPriority">—</div>
+                        </div>
+                        <div class="kpi-icon red"><i class="fas fa-exclamation-triangle"></i></div>
+                    </div>
+                    <div class="kpi-trend"><span class="trend-badge" style="background:#ffebee;color:#c62828"><i class="fas fa-bolt"></i> Needs action</span></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">Medium Priority</div>
+                            <div class="kpi-value" id="mediumPriority">—</div>
+                        </div>
+                        <div class="kpi-icon orange"><i class="fas fa-exclamation"></i></div>
+                    </div>
+                    <div class="kpi-trend"><span class="trend-badge badge-warning"><i class="fas fa-hourglass-half"></i> Monitor</span></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">Low Priority</div>
+                            <div class="kpi-value" id="lowPriority">—</div>
+                        </div>
+                        <div class="kpi-icon blue"><i class="fas fa-info-circle"></i></div>
+                    </div>
+                    <div class="kpi-trend"><span class="trend-badge" style="background:#e3f2fd;color:#1565c0"><i class="fas fa-calendar-alt"></i> Can wait</span></div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <div class="filter-group">
+                    <select id="priorityFilter" onchange="filterRecommendations()">
+                        <option value="">All Priorities</option>
+                        <option value="HIGH">High Priority Only</option>
+                        <option value="MEDIUM">Medium Priority Only</option>
+                        <option value="LOW">Low Priority Only</option>
+                    </select>
+                    <button class="btn-primary" onclick="refreshRecommendations()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="btn-secondary" onclick="openCartModal()"><i class="fas fa-list"></i> View Orders</button>
+                    <button class="btn-success" onclick="generatePurchaseOrder()"><i class="fas fa-file-invoice"></i> Checkout</button>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="card">
+                    <div class="card-header"><h2><i class="fas fa-chart-pie"></i> Priority Distribution</h2></div>
+                    <div class="chart-container"><canvas id="priorityChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h2><i class="fas fa-info-circle"></i> Recommendation Insights</h2></div>
+                    <div class="insights-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;padding:1rem">
+                        <div class="insight-card" style="display:flex;gap:.75rem;align-items:flex-start;background:#fafafa;border:1px solid #f0f0f0;border-radius:12px;padding:.9rem">
+                            <i class="fas fa-lightbulb insight-icon" style="color:#f39c12"></i>
+                            <div><div class="insight-label" style="font-weight:700;color:#2d5a27">AI-Powered Analysis</div><div class="insight-text" style="color:#555">Recommendations based on sales forecasts, current stock, and expiry dates</div></div>
+                        </div>
+                        <div class="insight-card" style="display:flex;gap:.75rem;align-items:flex-start;background:#fafafa;border:1px solid #f0f0f0;border-radius:12px;padding:.9rem">
+                            <i class="fas fa-clock insight-icon" style="color:#1976d2"></i>
+                            <div><div class="insight-label" style="font-weight:700;color:#2d5a27">Real-Time Updates</div><div class="insight-text" style="color:#555">System continuously monitors inventory levels and adjusts recommendations</div></div>
+                        </div>
+                        <div class="insight-card" style="display:flex;gap:.75rem;align-items:flex-start;background:#fafafa;border:1px solid #f0f0f0;border-radius:12px;padding:.9rem">
+                            <i class="fas fa-dollar-sign insight-icon" style="color:#2e7d32"></i>
+                            <div><div class="insight-label" style="font-weight:700;color:#2d5a27">Cost Optimization</div><div class="insight-text" style="color:#555">Balance between stock availability and minimizing holding costs</div></div>
+                        </div>
+                        <div class="insight-card" style="display:flex;gap:.75rem;align-items:flex-start;background:#fafafa;border:1px solid #f0f0f0;border-radius:12px;padding:.9rem">
+                            <i class="fas fa-shield-alt insight-icon" style="color:#c62828"></i>
+                            <div><div class="insight-label" style="font-weight:700;color:#2d5a27">Waste Prevention</div><div class="insight-text" style="color:#555">Avoid over-ordering products with near-expiry stock</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-list"></i> Procurement Recommendations</h2>
+                    <div class="header-actions">
+                        <span class="badge" id="recommendationCount">0 items</span>
+                        <button class="btn-icon" onclick="exportRecommendations()" title="Export to CSV"><i class="fas fa-download"></i></button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="recommendationsTable">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                                <th>Priority</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Current Stock</th>
+                                <th>Recommended Order</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recommendationsBody">
+                            <tr><td colspan="9" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading recommendations...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="bulkActionsBar" class="bulk-actions-bar" style="display:none;">
+                <div class="bulk-actions-content">
+                    <span id="selectedCount">0 items selected</span>
+                    <div class="bulk-actions-buttons" style="display:flex;gap:.5rem;align-items:center">
+                        <button class="btn-success" onclick="approveSelected()"><i class="fas fa-check"></i> Approve Selected</button>
+                        <button class="btn-secondary" onclick="dismissSelected()"><i class="fas fa-times"></i> Dismiss Selected</button>
+                        <button class="btn-danger" onclick="clearSelection()"><i class="fas fa-ban"></i> Clear Selection</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Recommendation Detail Modal -->
+    <div id="detailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Recommendation Details</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn-success" onclick="approveRecommendation()"><i class="fas fa-check"></i> Approve & Order</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content" style="max-width:700px">
+            <div class="modal-header">
+                <h2>Order Placed</h2>
+                <span class="close" onclick="closeCartModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="cartBody">
+                <div class="no-data">No orders placed yet.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeCartModal()">Close</button>
+                <button class="btn-success" onclick="generatePurchaseOrder()"><i class="fas fa-file-invoice"></i> Checkout</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+    let allRecommendations = [];
+        let selectedItems = new Set();
+        let priorityChart = null;
+    let currentRecId = null;
+
+        // Load data on page load
+        window.onload = async function() {
+            const logout = document.getElementById('logoutLink');
+            if (logout) logout.addEventListener('click',(e)=>{e.preventDefault();try{localStorage.removeItem('employee')}catch(_){}window.location.href='role_select.html'});
+            await loadProcurementStats();
+            await loadRecommendations();
+            await loadCart();
+        };
+
+        // Load Procurement Stats
+        async function loadProcurementStats() {
+            try {
+                const response = await fetch(`${API_BASE}/procurement/stats`);
+                const data = await response.json();
+                
+                document.getElementById('totalRecommendations').textContent = data.total_pending;
+                
+                // Update priority counts
+                let high = 0, medium = 0, low = 0;
+                data.priority_breakdown.forEach(item => {
+                    if (item.priority === 'HIGH') high = item.count;
+                    if (item.priority === 'MEDIUM') medium = item.count;
+                    if (item.priority === 'LOW') low = item.count;
+                });
+                
+                document.getElementById('highPriority').textContent = high;
+                document.getElementById('mediumPriority').textContent = medium;
+                document.getElementById('lowPriority').textContent = low;
+                
+                // Create priority chart
+                createPriorityChart(high, medium, low);
+                
+                // Show alert if high priority items exist
+                if (high > 0) {
+                    showAlert(high);
+                }
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Show Alert Banner
+        function showAlert(highCount) {
+            const alertBanner = document.getElementById('alertBanner');
+            alertBanner.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Urgent Action Required!</strong> ${highCount} high-priority items need immediate procurement attention.
+                </div>
+            `;
+        }
+
+        // Create Priority Chart
+        function createPriorityChart(high, medium, low) {
+            const ctx = document.getElementById('priorityChart').getContext('2d');
+            
+            if (priorityChart) {
+                priorityChart.destroy();
+            }
+
+            priorityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['High Priority', 'Medium Priority', 'Low Priority'],
+                    datasets: [{
+                        data: [high, medium, low],
+                        backgroundColor: [
+                            'rgba(214, 40, 40, 0.8)',
+                            'rgba(255, 167, 38, 0.8)',
+                            'rgba(79, 172, 254, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(214, 40, 40)',
+                            'rgb(255, 167, 38)',
+                            'rgb(79, 172, 254)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load Recommendations
+        async function loadRecommendations(priority = '') {
+            try {
+                const url = priority ? `${API_BASE}/procurement/recommendations?priority=${priority}` : `${API_BASE}/procurement/recommendations`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                allRecommendations = data.recommendations;
+                displayRecommendations(allRecommendations);
+                document.getElementById('recommendationCount').textContent = `${allRecommendations.length} items`;
+                
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                document.getElementById('recommendationsBody').innerHTML = `
+                    <tr><td colspan="9" class="error">Error loading recommendations</td></tr>
+                `;
+            }
+        }
+
+        // Display Recommendations
+        function displayRecommendations(recommendations) {
+            const tbody = document.getElementById('recommendationsBody');
+            
+            if (recommendations.length === 0) {
+                tbody.innerHTML = `
+                    <tr><td colspan="9" class="no-data">
+                        <i class="fas fa-check-circle"></i> No pending recommendations. All stock levels are optimal!
+                    </td></tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = recommendations.map(rec => {
+                const priorityClass = rec.priority.toLowerCase();
+                const priorityIcon = rec.priority === 'HIGH' ? 'exclamation-circle' : 
+                                   rec.priority === 'MEDIUM' ? 'exclamation-triangle' : 'info-circle';
+                
+                return `
+                    <tr>
+                        <td>
+                            <input type="checkbox" class="item-checkbox" value="${rec.recommendation_id}" 
+                                   onchange="updateSelection()">
+                        </td>
+                        <td>
+                            <span class="priority-badge priority-${priorityClass}">
+                                <i class="fas fa-${priorityIcon}"></i> ${rec.priority}
+                            </span>
+                        </td>
+                        <td><strong>${rec.product_name}</strong></td>
+                        <td>${rec.category}</td>
+                        <td><span class="stock-badge">${rec.current_stock.toLocaleString()}</span></td>
+                        <td><span class="order-badge">${rec.recommended_quantity > 0 ? rec.recommended_quantity.toLocaleString() : 'HOLD'}</span></td>
+                        <td>${rec.reason}</td>
+                        <td><span class="status-badge status-pending">${rec.status}</span></td>
+                        <td>
+                            <button class="btn-icon" onclick="viewDetails(${rec.recommendation_id})" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${rec.recommended_quantity > 0 ? `
+                                <button class="btn-icon btn-success" onclick="quickApprove(${rec.recommendation_id})" title="Quick Approve">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Filter Recommendations
+        function filterRecommendations() {
+            const priority = document.getElementById('priorityFilter').value;
+            loadRecommendations(priority);
+        }
+
+        // Refresh Recommendations
+        async function refreshRecommendations() {
+            await loadProcurementStats();
+            await loadRecommendations();
+            
+            // Show success message
+            const alertBanner = document.getElementById('alertBanner');
+            const existingAlerts = alertBanner.innerHTML;
+            alertBanner.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> Recommendations refreshed successfully!
+                </div>
+            ` + existingAlerts;
+            
+            setTimeout(() => {
+                const successAlert = alertBanner.querySelector('.alert-success');
+                if (successAlert) successAlert.remove();
+            }, 3000);
+        }
+
+        // Toggle Select All
+        function toggleSelectAll() {
+            const selectAll = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+                checkbox.checked = selectAll;
+                if (selectAll) {
+                    selectedItems.add(checkbox.value);
+                } else {
+                    selectedItems.clear();
+                }
+            });
+            updateSelection();
+        }
+
+        // Update Selection
+        function updateSelection() {
+            selectedItems.clear();
+            document.querySelectorAll('.item-checkbox:checked').forEach(checkbox => {
+                selectedItems.add(checkbox.value);
+            });
+            
+            const bulkBar = document.getElementById('bulkActionsBar');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedItems.size > 0) {
+                bulkBar.style.display = 'block';
+                selectedCount.textContent = `${selectedItems.size} item${selectedItems.size > 1 ? 's' : ''} selected`;
+            } else {
+                bulkBar.style.display = 'none';
+            }
+        }
+
+        // View Details
+        function viewDetails(recId) {
+            const rec = allRecommendations.find(r => r.recommendation_id === recId);
+            if (!rec) return;
+            currentRecId = recId;
+            
+            const modal = document.getElementById('detailModal');
+            const modalBody = document.getElementById('modalBody');
+            
+            modalBody.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-section">
+                        <h3>Product Information</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Product:</span>
+                            <span class="detail-value"><strong>${rec.product_name}</strong></span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Category:</span>
+                            <span class="detail-value">${rec.category}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Current Stock:</span>
+                            <span class="detail-value">${rec.current_stock.toLocaleString()} units</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>Recommendation</h3>
+                        <div class="detail-row">
+                            <span class="detail-label">Priority:</span>
+                            <span class="detail-value">
+                                <span class="priority-badge priority-${rec.priority.toLowerCase()}">
+                                    ${rec.priority}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Order Quantity:</span>
+                            <span class="detail-value">${rec.recommended_quantity > 0 ? rec.recommended_quantity.toLocaleString() + ' units' : 'HOLD - Do not order'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Reason:</span>
+                            <span class="detail-value">${rec.reason}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value">${rec.status}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Created:</span>
+                            <span class="detail-value">${rec.created_date}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        // Close Modal
+        function closeModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        // Quick Approve
+        async function quickApprove(recId) {
+            if (!confirm('Approve this procurement recommendation?')) return;
+            try {
+                const rec = allRecommendations.find(r => r.recommendation_id === recId);
+                let body = {};
+                if (rec && (!rec.recommended_quantity || rec.recommended_quantity <= 0)) {
+                    const q = prompt('Enter quantity to order (leave blank for none):', '100');
+                    const qty = q ? parseInt(q, 10) : 0;
+                    if (Number.isFinite(qty) && qty > 0) body.quantity = qty;
+                }
+                const res = await fetch(`${API_BASE}/procurement/recommendations/${recId}/approve`, {
+                    method: 'POST',
+                    headers: body.quantity ? { 'Content-Type': 'application/json' } : undefined,
+                    body: body.quantity ? JSON.stringify(body) : undefined
+                });
+                const data = await res.json();
+                // Update UI row status
+                const row = allRecommendations.find(r => r.recommendation_id === recId);
+                if (row) row.status = 'APPROVED';
+                await loadProcurementStats();
+                await loadCart();
+                // Refresh recommendations to reflect status badge
+                await loadRecommendations(document.getElementById('priorityFilter').value);
+                toastSuccess(data.message || 'Approved');
+            } catch (e) {
+                toastError('Failed to approve');
+            }
+        }
+
+        // Approve Selected
+        async function approveSelected() {
+            if (selectedItems.size === 0) return;
+            if (!confirm(`Approve ${selectedItems.size} selected recommendation(s)?`)) return;
+            try {
+                // Approve sequentially (small set)
+                for (const id of selectedItems) {
+                    await fetch(`${API_BASE}/procurement/recommendations/${id}/approve`, { method: 'POST' });
+                }
+                clearSelection();
+                await loadProcurementStats();
+                await loadCart();
+                await loadRecommendations(document.getElementById('priorityFilter').value);
+                toastSuccess('Selected recommendations approved');
+            } catch (e) {
+                toastError('Bulk approve failed');
+            }
+        }
+
+        // Dismiss Selected
+        function dismissSelected() {
+            if (selectedItems.size === 0) return;
+            if (confirm(`Dismiss ${selectedItems.size} selected recommendation(s)?`)) {
+                alert(`${selectedItems.size} recommendations dismissed!`);
+                clearSelection();
+            }
+        }
+
+        // Clear Selection
+        function clearSelection() {
+            selectedItems.clear();
+            document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('selectAll').checked = false;
+            updateSelection();
+        }
+
+        // Generate Purchase Order
+        async function generatePurchaseOrder() {
+            if (!confirm('Submit current orders as Purchase Order?')) return;
+            try {
+                const res = await fetch(`${API_BASE}/procurement/cart/checkout`, { method: 'POST' });
+                const data = await res.json();
+                await loadCart();
+                await loadProcurementStats();
+                await loadRecommendations(document.getElementById('priorityFilter').value);
+                toastSuccess(data.message || 'Purchase Order submitted');
+            } catch (e) {
+                toastError('Failed to submit Purchase Order');
+            }
+        }
+
+        // Export Recommendations
+        function exportRecommendations() {
+            alert('Export to CSV feature coming soon!');
+        }
+
+        // Approve Recommendation (from modal)
+        async function approveRecommendation() {
+            if (!currentRecId) { closeModal(); return; }
+            try {
+                const rec = allRecommendations.find(r => r.recommendation_id === currentRecId);
+                let body = {};
+                if (rec && (!rec.recommended_quantity || rec.recommended_quantity <= 0)) {
+                    const q = prompt('Enter quantity to order (leave blank for none):', '100');
+                    const qty = q ? parseInt(q, 10) : 0;
+                    if (Number.isFinite(qty) && qty > 0) body.quantity = qty;
+                }
+                await fetch(`${API_BASE}/procurement/recommendations/${currentRecId}/approve`, {
+                    method: 'POST',
+                    headers: body.quantity ? { 'Content-Type': 'application/json' } : undefined,
+                    body: body.quantity ? JSON.stringify(body) : undefined
+                });
+                closeModal();
+                await loadCart();
+                await loadProcurementStats();
+                await loadRecommendations(document.getElementById('priorityFilter').value);
+                toastSuccess('Approved');
+            } catch (e) {
+                toastError('Failed to approve');
+            }
+        }
+
+        // Load Cart badge
+        async function loadCart() {
+            try {
+                const res = await fetch(`${API_BASE}/procurement/cart`);
+                const data = await res.json();
+                const badge = document.getElementById('cartBadge');
+                if (data && data.cart) {
+                    const items = Array.isArray(data.cart.items) ? data.cart.items.length : 0;
+                    const units = data.cart.total_units || 0;
+                    if (badge) badge.textContent = `Orders Placed: ${items} items (${units} units)`;
+                    renderCartBody(data.cart);
+                } else {
+                    if (badge) badge.textContent = 'Orders Placed: 0';
+                    renderCartBody(null);
+                }
+            } catch (_) {}
+        }
+
+        function renderCartBody(cart) {
+            const body = document.getElementById('cartBody');
+            if (!body) return;
+            if (!cart || !cart.items || cart.items.length === 0) {
+                body.innerHTML = '<div class="no-data">No orders placed yet.</div>';
+                return;
+            }
+            const rows = cart.items.map(it => `
+                <tr>
+                    <td>${it.product_name || it.product_id}</td>
+                    <td style="text-align:right">${it.quantity}</td>
+                </tr>
+            `).join('');
+            body.innerHTML = `
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead><tr><th>Product</th><th style=\"text-align:right\">Quantity</th></tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        function openCartModal(){
+            const modal = document.getElementById('cartModal');
+            if (modal) modal.style.display = 'block';
+        }
+        function closeCartModal(){
+            const modal = document.getElementById('cartModal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        // Toast helpers
+        function toastSuccess(msg){
+            const alertBanner = document.getElementById('alertBanner');
+            const el = document.createElement('div');
+            el.className = 'alert alert-success';
+            el.innerHTML = `<i class="fas fa-check-circle"></i> ${msg}`;
+            alertBanner.appendChild(el);
+            setTimeout(()=>el.remove(), 2500);
+        }
+        function toastError(msg){
+            const alertBanner = document.getElementById('alertBanner');
+            const el = document.createElement('div');
+            el.className = 'alert alert-danger';
+            el.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${msg}`;
+            alertBanner.appendChild(el);
+            setTimeout(()=>el.remove(), 3000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('detailModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

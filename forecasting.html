@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShelfWare - Demand Forecasting</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Poppins',sans-serif;background:#f8f9fa;color:#333;line-height:1.6}
+        /* Header */
+        .header{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%);color:#fff;position:sticky;top:0;z-index:1000;box-shadow:0 2px 20px rgba(0,0,0,.15)}
+        .header-container{max-width:1400px;margin:0 auto;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center}
+        .logo{display:flex;align-items:center;gap:.75rem;font-size:1.5rem;font-weight:700;color:#fff}
+        .logo img{width:45px;height:45px;border-radius:50%;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+        .admin-info{display:flex;align-items:center;gap:1.5rem}
+        .welcome-text{display:flex;align-items:center;gap:.5rem;padding:.5rem 1rem;background:rgba(255,255,255,.12);border-radius:25px}
+        .logout-btn{background:rgba(255,255,255,.12);color:#fff;border:none;padding:.6rem 1.25rem;border-radius:25px;cursor:pointer;text-decoration:none;font-weight:500;display:flex;align-items:center;gap:.5rem;transition:all .3s}
+        .logout-btn:hover{background:rgba(255,255,255,.22);transform:translateY(-2px)}
+        /* Sidebar */
+        .sidebar{width:260px;background:#fff;position:fixed;left:0;top:73px;height:calc(100vh - 73px);box-shadow:2px 0 20px rgba(0,0,0,.08);padding:1.5rem 0}
+        .sidebar-menu{list-style:none;padding:0 1rem}
+        .sidebar-menu li{margin-bottom:.5rem}
+        .sidebar-menu a{display:flex;align-items:center;gap:1rem;padding:.875rem 1.25rem;color:#555;text-decoration:none;border-radius:12px;transition:all .3s;font-weight:500}
+        .sidebar-menu a:hover{background:linear-gradient(135deg,#e8f5e9 0%,#c8e6c9 100%);color:#2d5a27;transform:translateX(5px)}
+        .sidebar-menu a.active{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%);color:#fff;box-shadow:0 4px 12px rgba(56,142,60,.3)}
+        .sidebar-menu a i{font-size:1.1rem;width:24px;text-align:center}
+        /* Main */
+        .main-content{margin-left:260px;padding:2rem;min-height:calc(100vh - 73px)}
+    .content-wrapper{max-width:1400px;margin:0 auto}
+    .page-header{margin-bottom:1.5rem}
+    .breadcrumb{display:flex;align-items:center;gap:.5rem;color:#888;font-size:.9rem}
+    .breadcrumb a{color:#388e3c;text-decoration:none}
+    .page-title{font-size:2rem;font-weight:700;color:#2d5a27;margin:.25rem 0}
+    .page-subtitle{color:#666}
+        /* KPI */
+        .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1rem 0 1.5rem}
+        .kpi-card{background:#fff;border-radius:16px;padding:1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.08);transition:all .3s;position:relative;overflow:hidden}
+        .kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#2d5a27,#388e3c,#4caf50)}
+        .kpi-card:hover{transform:translateY(-5px);box-shadow:0 8px 24px rgba(0,0,0,.12)}
+        .kpi-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem}
+        .kpi-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.3rem}
+        .kpi-icon.green{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%)}
+        .kpi-icon.blue{background:linear-gradient(135deg,#1565c0 0%,#1976d2 100%)}
+        .kpi-icon.orange{background:linear-gradient(135deg,#e65100 0%,#f57c00 100%)}
+        .kpi-icon.purple{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%)}
+        .kpi-label{color:#888;font-size:.8rem;text-transform:uppercase;font-weight:600}
+        .kpi-value{font-size:1.75rem;font-weight:800;color:#333;margin:.25rem 0}
+        .kpi-trend{font-size:.85rem;color:#666}
+        .trend-badge{padding:.25rem .6rem;border-radius:20px;font-size:.75rem;font-weight:600;background:#e8f5e9;color:#2d5a27}
+        /* Actions */
+        .action-bar{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between;background:#fff;border-radius:16px;padding:1rem 1.25rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1.25rem}
+        .search-box{display:flex;align-items:center;gap:.75rem;background:#f7faf7;border:1px solid #dcefdc;border-radius:12px;padding:.6rem .9rem;min-width:280px;flex:1}
+        .search-box i{color:#2d5a27}
+        .search-box input{border:none;background:transparent;outline:none;width:100%;font-family:inherit}
+        .filter-group{display:flex;gap:.75rem;align-items:center}
+        select#daysFilter{border:1px solid #dcefdc;border-radius:10px;padding:.6rem .9rem;background:#fff;font-family:inherit}
+        .btn-primary{background:linear-gradient(135deg,#2d5a27 0%,#388e3c 100%);color:#fff;border:none;border-radius:12px;padding:.6rem 1rem;cursor:pointer;font-weight:600;box-shadow:0 4px 12px rgba(56,142,60,.25);transition:all .2s}
+        .btn-primary:hover{transform:translateY(-2px)}
+        .btn-secondary{background:#f1f8f1;color:#2d5a27;border:1px solid #c8e6c9;border-radius:10px;padding:.5rem .9rem;cursor:pointer;font-weight:600}
+        .btn-icon{background:#fff;border:1px solid #eaeaea;border-radius:10px;padding:.45rem .6rem;cursor:pointer}
+        /* Cards + Charts */
+        .card{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem}
+        .card-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid #f0f0f0}
+        .card-header h2{font-size:1.1rem;color:#2d5a27}
+        .chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem;margin-bottom:1rem}
+        .chart-card .chart-container{position:relative;height:360px;padding:1rem}
+        /* Table */
+        .table-responsive{width:100%;overflow:auto}
+        table.data-table{width:100%;border-collapse:collapse}
+        .data-table thead{background:linear-gradient(135deg,#f8fdf8 0%,#e8f5e9 100%)}
+        .data-table th{padding:1rem;text-align:left;font-weight:700;color:#2d5a27;border-bottom:2px solid #c8e6c9}
+        .data-table td{padding:1rem;border-bottom:1px solid #f0f0f0;color:#555}
+        .data-table tbody tr:hover{background:#f8fdf8}
+        .badge{padding:.35rem .75rem;border-radius:20px;background:#f1f8f1;color:#2d5a27;font-size:.8rem;font-weight:600}
+        .badge-success{background:#e8f5e9;color:#2d5a27}
+        .badge-warning{background:#fff3e0;color:#e65100}
+        .stock-badge{background:#e8f5e9;color:#2d5a27;padding:.25rem .6rem;border-radius:6px;font-weight:700}
+        /* Forecast details */
+        .forecast-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;padding:1rem}
+        .stat-card{display:flex;gap:.75rem;align-items:center;background:#fafafa;border:1px solid #f0f0f0;border-radius:12px;padding:.8rem}
+        .stat-icon{width:42px;height:42px;border-radius:10px;color:#fff;display:flex;align-items:center;justify-content:center}
+        .stat-info .stat-label{font-size:.8rem;color:#666}
+        .stat-info .stat-value{font-size:1.1rem;font-weight:700}
+        .insights-section{padding:0 1rem 1rem}
+        .insights-section h3{color:#2d5a27;margin:.5rem 0}
+        .insights-list{list-style:none}
+        .insights-list li{display:flex;gap:.5rem;align-items:flex-start;margin:.35rem 0;color:#444}
+        /* Utilities */
+        .text-center{text-align:center}
+        .loading{padding:1rem;text-align:center;color:#777}
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="logo.png" alt="ShelfWare" onerror="this.style.display='none'">
+                <span>ShelfWare</span>
+            </div>
+            <div class="admin-info">
+                <div class="welcome-text"><i class="fas fa-user-cog"></i> Forecasting</div>
+                <a href="#" id="logoutLink" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+    </header>
+    <aside class="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="admininterface.html"><i class="fas fa-chart-line"></i> Dashboard</a></li>
+            <li><a href="inventory.html"><i class="fas fa-boxes"></i> Inventory</a></li>
+            <li><a class="active" href="forecasting.html"><i class="fas fa-chart-bar"></i> Forecasting</a></li>
+            <li><a href="procurement.html"><i class="fas fa-shopping-cart"></i> Procurement</a></li>
+        </ul>
+    </aside>
+    <main class="main-content">
+        <div class="content-wrapper">
+            <div class="page-header" style="background:transparent">
+                <div class="breadcrumb"><a href="admininterface.html">Home</a><i class="fas fa-chevron-right"></i><span>Forecasting</span></div>
+                <h1 class="page-title"><i class="fas fa-chart-line"></i> Demand Forecasting</h1>
+                <p class="page-subtitle">Random Forest ML predictions • 7/14/30-day forecasts from historical sales patterns</p>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">Total Forecasts</div>
+                            <div class="kpi-value" id="totalForecasts">—</div>
+                        </div>
+                        <div class="kpi-icon purple"><i class="fas fa-chart-area"></i></div>
+                    </div>
+                    <div class="kpi-trend"><span class="trend-badge"><i class="fas fa-calendar-alt"></i> 30-day horizon</span></div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">Avg Confidence</div>
+                            <div class="kpi-value" id="avgConfidence">—</div>
+                        </div>
+                        <div class="kpi-icon green"><i class="fas fa-shield-alt"></i></div>
+                    </div>
+                    <div class="kpi-trend"><i class="fas fa-check-circle"></i> forecast accuracy</div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">High Demand</div>
+                            <div class="kpi-value" id="highDemand">—</div>
+                        </div>
+                        <div class="kpi-icon orange"><i class="fas fa-fire"></i></div>
+                    </div>
+                    <div class="kpi-trend"><span class="trend-badge badge-warning"><i class="fas fa-arrow-up"></i> Peak products</span></div>
+                </div>
+
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <div>
+                            <div class="kpi-label">Forecast Period</div>
+                            <div class="kpi-value" id="forecastPeriod">30 Days</div>
+                        </div>
+                        <div class="kpi-icon blue"><i class="fas fa-calendar-alt"></i></div>
+                    </div>
+                    <div class="kpi-trend"><span class="trend-badge"><i class="fas fa-clock"></i> Adjustable</span></div>
+                </div>
+            </div>
+
+            <div class="action-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="productSearch" placeholder="Search products for forecast..." list="productList">
+                    <datalist id="productList"></datalist>
+                </div>
+                <div class="filter-group">
+                    <select id="daysFilter" onchange="updateForecastDays()">
+                        <option value="7">7 Days</option>
+                        <option value="14">14 Days</option>
+                        <option value="30" selected>30 Days</option>
+                    </select>
+                    <button class="btn-primary" onclick="searchProduct()"><i class="fas fa-chart-line"></i> View Forecast</button>
+                </div>
+            </div>
+
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h2><i class="fas fa-chart-line"></i> Product Demand Forecast</h2>
+                    <span class="badge" id="chartProductName">Select a product</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="demandChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-trophy"></i> Top 20 High-Demand Products (30-Day Forecast)</h2>
+                    <button class="btn-secondary" onclick="loadTopProducts()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table" id="topProductsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th>Category</th>
+                                <th>Avg Daily Demand</th>
+                                <th>30-Day Forecast</th>
+                                <th>Confidence</th>
+                                <th>Trend</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topProductsBody">
+                            <tr>
+                                <td colspan="8" class="loading"><i class="fas fa-spinner fa-spin"></i> Loading forecasts...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="forecastDetails" class="card" style="display:none;">
+                <div class="card-header">
+                    <h2><i class="fas fa-info-circle"></i> Forecast Analysis</h2>
+                    <button class="btn-icon" onclick="closeForecastDetails()"><i class="fas fa-times"></i></button>
+                </div>
+                <div id="forecastDetailsContent"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5000';
+        let demandChart = null;
+        let allProducts = [];
+
+        // Load data on page load
+        window.onload = async function() {
+            // logout behavior (optional parity with other pages)
+            const logout = document.getElementById('logoutLink');
+            if (logout) logout.addEventListener('click', (e)=>{ e.preventDefault(); try{localStorage.removeItem('employee')}catch(_){} window.location.href = 'role_select.html'; });
+            await loadTopProducts();
+            await loadProductList();
+        };
+
+        // Load Product List for Autocomplete
+        async function loadProductList() {
+            try {
+                const response = await fetch(`${API_BASE}/products?per_page=500`);
+                const data = await response.json();
+                allProducts = data.products || [];
+                
+                const datalist = document.getElementById('productList');
+                datalist.innerHTML = allProducts.map(p => 
+                    `<option value="${p.id}">${p.name}</option>`
+                ).join('');
+            } catch (error) {
+                console.error('Error loading product list:', error);
+            }
+        }
+
+        // Load Top Products
+        async function loadTopProducts() {
+            try {
+                const response = await fetch(`${API_BASE}/forecasts/summary`);
+                const data = await response.json();
+                
+                // Update KPIs
+                const highDemand = data.filter(p => p.total_30day_demand > 500).length;
+                const totalForecasts = Math.round(data.reduce((s,p)=> s + (p.total_30day_demand||0), 0));
+                const avgConfidence = data.length ? (data.reduce((s,p)=> s + (p.avg_confidence||0), 0) / data.length) : 0;
+                const tfEl = document.getElementById('totalForecasts');
+                const acEl = document.getElementById('avgConfidence');
+                const hdEl = document.getElementById('highDemand');
+                if (tfEl) tfEl.textContent = totalForecasts.toLocaleString();
+                if (acEl) acEl.textContent = `${(avgConfidence*100).toFixed(1)}%`;
+                if (hdEl) hdEl.textContent = highDemand.toLocaleString();
+                
+                displayTopProducts(data.slice(0, 20));
+            } catch (error) {
+                console.error('Error loading top products:', error);
+                document.getElementById('topProductsBody').innerHTML = `
+                    <tr><td colspan="8" class="error">Error loading forecasts</td></tr>
+                `;
+            }
+        }
+
+        // Display Top Products Table
+        function displayTopProducts(products) {
+            const tbody = document.getElementById('topProductsBody');
+            
+            tbody.innerHTML = products.map((product, index) => {
+                const confidencePercent = (product.avg_confidence * 100).toFixed(1);
+                const confidenceClass = product.avg_confidence >= 0.8 ? 'success' : 'warning';
+                const trend = product.total_30day_demand > 800 ? '📈 High' : '📊 Medium';
+                
+                return `
+                    <tr>
+                        <td><strong>${index + 1}</strong></td>
+                        <td><strong>${product.product_name}</strong></td>
+                        <td>${product.category}</td>
+                        <td>${product.avg_daily_demand.toFixed(1)}</td>
+                        <td><span class="stock-badge">${Math.round(product.total_30day_demand).toLocaleString()}</span></td>
+                        <td><span class="badge badge-${confidenceClass}">${confidencePercent}%</span></td>
+                        <td>${trend}</td>
+                        <td>
+                            <button class="btn-icon" onclick="viewProductForecast('${product.product_name}')" title="View Chart">
+                                <i class="fas fa-chart-line"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Search Product
+        async function searchProduct() {
+            const searchValue = document.getElementById('productSearch').value;
+            
+            // Try to find product ID
+            let productId = null;
+            if (!isNaN(searchValue)) {
+                productId = searchValue;
+            } else {
+                const product = allProducts.find(p => 
+                    p.name.toLowerCase().includes(searchValue.toLowerCase())
+                );
+                productId = product?.id;
+            }
+
+            if (!productId) {
+                alert('Product not found. Please select from the list.');
+                return;
+            }
+
+            await loadProductForecast(productId);
+        }
+
+        // View Product Forecast (from table)
+        async function viewProductForecast(productName) {
+            const product = allProducts.find(p => p.name === productName);
+            if (product) {
+                document.getElementById('productSearch').value = product.id;
+                await loadProductForecast(product.id);
+            }
+        }
+
+        // Load Product Forecast
+        async function loadProductForecast(productId) {
+            const days = document.getElementById('daysFilter').value;
+            
+            try {
+                const response = await fetch(`${API_BASE}/forecasts/product/${productId}?days=${days}`);
+                const data = await response.json();
+                
+                if (data.forecasts.length === 0) {
+                    alert('No forecast data available for this product');
+                    return;
+                }
+
+                // Get product name
+                const product = allProducts.find(p => p.id == productId);
+                const productName = product ? product.name : `Product #${productId}`;
+                
+                document.getElementById('chartProductName').textContent = productName;
+                
+                // Create chart
+                createDemandChart(data.forecasts, productName);
+                
+                // Show forecast details
+                showForecastDetails(data.forecasts, productName);
+                
+            } catch (error) {
+                console.error('Error loading forecast:', error);
+                alert('Error loading forecast data');
+            }
+        }
+
+        // Create Demand Chart
+        function createDemandChart(forecasts, productName) {
+            const ctx = document.getElementById('demandChart').getContext('2d');
+            
+            if (demandChart) {
+                demandChart.destroy();
+            }
+
+            const dates = forecasts.map(f => f.forecast_date);
+            const demands = forecasts.map(f => f.predicted_demand);
+            const confidences = forecasts.map(f => f.confidence_level * 100);
+
+            demandChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Predicted Demand',
+                        data: demands,
+                        borderColor: 'rgb(75, 192, 192)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `${productName} - Demand Forecast`,
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            display: true
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const index = context.dataIndex;
+                                    return `Confidence: ${confidences[index].toFixed(1)}%`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Predicted Units'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Show Forecast Details
+        function showForecastDetails(forecasts, productName) {
+            const detailsDiv = document.getElementById('forecastDetails');
+            const contentDiv = document.getElementById('forecastDetailsContent');
+            
+            // Calculate statistics
+            const avgDemand = forecasts.reduce((sum, f) => sum + f.predicted_demand, 0) / forecasts.length;
+            const totalDemand = forecasts.reduce((sum, f) => sum + f.predicted_demand, 0);
+            const avgConfidence = forecasts.reduce((sum, f) => sum + f.confidence_level, 0) / forecasts.length;
+            const maxDemand = Math.max(...forecasts.map(f => f.predicted_demand));
+            const minDemand = Math.min(...forecasts.map(f => f.predicted_demand));
+            
+            contentDiv.innerHTML = `
+                <div class="forecast-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Avg Daily Demand</div>
+                            <div class="stat-value">${avgDemand.toFixed(1)} units</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Total Forecast</div>
+                            <div class="stat-value">${Math.round(totalDemand).toLocaleString()} units</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Avg Confidence</div>
+                            <div class="stat-value">${(avgConfidence * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            <i class="fas fa-arrows-alt-v"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-label">Demand Range</div>
+                            <div class="stat-value">${minDemand.toFixed(0)} - ${maxDemand.toFixed(0)}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="insights-section">
+                    <h3><i class="fas fa-lightbulb"></i> Key Insights</h3>
+                    <ul class="insights-list">
+                        <li>
+                            <i class="fas fa-brain"></i>
+                            <strong>ML Model:</strong> Random Forest with 100 decision trees analyzing day-of-week, lag features, and rolling trends
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Forecast Reliability:</strong> ${avgConfidence >= 0.8 ? 'High' : 'Medium'} confidence level (${(avgConfidence * 100).toFixed(1)}%)
+                        </li>
+                        <li>
+                            <i class="fas fa-chart-line"></i>
+                            <strong>Demand Variability:</strong> ${((maxDemand - minDemand) / avgDemand * 100).toFixed(1)}% variation expected
+                        </li>
+                        <li>
+                            <i class="fas fa-box"></i>
+                            <strong>Recommended Stock:</strong> Maintain ${Math.ceil(totalDemand * 1.2).toLocaleString()} units (includes 20% safety buffer)
+                        </li>
+                        <li>
+                            <i class="fas fa-calendar-check"></i>
+                            <strong>Reorder Point:</strong> Order new stock when inventory drops below ${Math.ceil(avgDemand * 7)} units
+                        </li>
+                    </ul>
+                </div>
+            `;
+            
+            detailsDiv.style.display = 'block';
+        }
+
+        // Close Forecast Details
+        function closeForecastDetails() {
+            document.getElementById('forecastDetails').style.display = 'none';
+        }
+
+        // Update Forecast Days
+        function updateForecastDays() {
+            const searchValue = document.getElementById('productSearch').value;
+            if (searchValue) {
+                searchProduct();
+            }
+        }
+    </script>
+</body>
+</html>

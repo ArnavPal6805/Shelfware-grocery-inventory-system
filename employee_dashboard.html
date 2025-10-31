@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Employee Dashboard — ShelfWare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Soft UI Dashboard Tailwind styles -->
+    <link href="../Soft-UI-Dashboard-Tailwind-1.0.0/build/assets/css/soft-ui-dashboard-tailwind.min.css" rel="stylesheet">
+    <!-- Shared UI overrides -->
+    <link href="styles.css" rel="stylesheet">
+    <style>
+        /* Reuse admin-like look */
+        body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:#f3f6f9; color:#1f2937; }
+        .header-bar { background: linear-gradient(135deg, #2d5a27 0%, #388e3c 100%); color: white; padding: 12px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.06); position:relative; z-index:1100; }
+        .header-container { max-width:1100px; margin:0 auto; padding:0 20px; display:flex; align-items:center; justify-content:space-between; }
+        .logo { display:flex; align-items:center; gap:10px; font-weight:700; }
+        .logo img { width:36px; height:36px; border-radius:6px; }
+        .logout-btn { background: rgba(255,255,255,0.12); color: white; padding:8px 12px; border-radius:8px; text-decoration:none; }
+
+    .container { max-width:1100px; margin:20px auto; padding:0 20px 20px; min-height: calc(100vh - 80px); }
+        .card { background:white; border-radius:12px; padding:18px; box-shadow:0 6px 18px rgba(17,24,39,0.06); margin-bottom:16px; }
+        .header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+        .title { font-size:20px; font-weight:700; }
+        .sub { color:#6b7280; }
+        .login { display:flex; gap:8px; align-items:center; }
+        input[type=text], input[type=password], select { padding:10px 12px; border-radius:8px; border:1px solid #e6edf3; }
+        button { background:#2563eb; color:white; padding:10px 14px; border-radius:8px; border:0; cursor:pointer; }
+        .row { display:flex; gap:16px; margin-top:16px; }
+        .col { flex:1; }
+        .kpis { display:flex; gap:12px; }
+        .kpi { background:linear-gradient(180deg,#fff,#fbfdff); border-radius:8px; padding:12px; flex:1; text-align:center; }
+        .kpi .value { font-size:20px; font-weight:700; margin-top:6px; }
+        .small { font-size:13px; color:#6b7280; }
+        table { width:100%; border-collapse:collapse; margin-top:8px; }
+        th, td { padding:10px 8px; text-align:left; border-bottom:1px solid #eef2f6; }
+        th { background:#fbfdff; font-weight:600; color:#374151; position:sticky; top:0; }
+        .empty { color:#9aa6b2; text-align:center; padding:20px; }
+        @media (max-width:900px){ .row{flex-direction:column;} }
+
+    /* Chart containers: fixed heights so charts don't stretch */
+    .chart-area { width:100%; height:220px; overflow:hidden; }
+    .chart-area.small { height:160px; }
+    /* Ensure canvas uses parent size and doesn't behave like inline element */
+    .chart-area canvas { width:100% !important; height:100% !important; display:block; }
+    /* Ensure the main content reserves space for the fixed sidebar on wide screens */
+    .content-wrapper { margin-left: 0; }
+    @media (min-width: 1280px) { .content-wrapper { margin-left: 16rem; } }
+    </style>
+</head>
+<body class="m-0 font-sans antialiased font-normal text-base leading-default bg-gray-50 text-slate-500">
+    <!-- Use same sidenav scaffold as admin pages for visual consistency -->
+    <aside class="max-w-62.5 ease-nav-brand z-990 fixed inset-y-0 my-0 ml-0 w-64 flex-wrap items-center justify-between overflow-y-auto rounded-tr-2xl rounded-br-2xl border-0 p-0 shadow-soft-2xl">
+        <div class="h-19.5 p-4">
+            <a class="block px-4 py-2 text-sm whitespace-nowrap text-white" href="employee_dashboard.html" style="background:transparent;" aria-hidden="true"></a>
+        </div>
+        <hr class="h-px mt-0 bg-transparent bg-gradient-to-r from-transparent via-black/40 to-transparent" />
+        <div class="items-center block w-auto max-h-screen overflow-auto h-sidenav grow basis-full p-3">
+            <ul class="flex flex-col pl-0 mb-0">
+                <li class="w-full mb-2"><a href="employee_dashboard.html" class="py-2.7 text-sm my-0 mx-2 flex items-center whitespace-nowrap px-3 rounded-lg text-white">Dashboard</a></li>
+                <li class="w-full mb-2"><a href="customerinterface.html" class="py-2.7 text-sm my-0 mx-2 flex items-center whitespace-nowrap px-3 text-white">Customer View</a></li>
+                <li class="w-full mb-2"><a href="role_select.html" class="py-2.7 text-sm my-0 mx-2 flex items-center whitespace-nowrap px-3 text-white">Switch Role</a></li>
+            </ul>
+        </div>
+    </aside>
+
+    <div class="ml-0 xl:ml-64 content-wrapper">
+    <!-- Shared header (uses .header from styles.css) -->
+    <header class="header" style="background: linear-gradient(135deg, #2d5a27 0%, #388e3c 100%); color: white; position:fixed; top:0; left:0; right:0; z-index:1400;">
+        <div class="header-container container mx-auto px-6">
+            <div class="logo">
+                <img src="logo.png" alt="ShelfWare">
+                <span>ShelfWare</span>
+            </div>
+            <div class="admin-info">
+                <div class="welcome-text">
+                    <i class="fas fa-user"></i>
+                    Welcome, Employee
+                </div>
+                <a href="#" id="logoutLink" class="inline-flex items-center px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- small helper placed below the fixed navbar to avoid overlap with sidebar/header -->
+        <div style="height: calc(var(--header-height) + 0.75rem);"></div>
+
+        <div class="card header bg-white rounded-xl shadow-soft-xl p-6">
+            <div>
+                <div class="title">Employee Dashboard</div>
+            </div>
+            <div>
+                <div id="loginHint" class="small">Open the <a href="admin_login.html">unified login</a> and sign in — your employee session will be remembered here.</div>
+            </div>
+        </div>
+
+        <div style="margin-top:0.5rem; margin-bottom:0.5rem; max-width:var(--max-content); margin-left:auto; margin-right:auto; padding:0 1rem;">
+            <div class="small" style="color:var(--muted);">View your salary, hours, and recent performance below.</div>
+        </div>
+
+        <div id="dashboardArea" style="display:none">
+            <div class="row">
+                <div class="col">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div class="card p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="small">Hello, <span id="empName" style="font-weight:700"></span></div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <button class="inline-flex items-center px-3 py-2 bg-white/10 text-white rounded-lg"><i class="fas fa-ellipsis-v"></i></button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 mt-4">
+                                <div class="bg-gradient-to-r from-white to-white/90 rounded-xl p-4 shadow-soft-2xl">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-slate-500">Salary</div>
+                                            <div id="kpiSalary" class="text-2xl font-extrabold mt-2">—</div>
+                                        </div>
+                                        <div class="bg-gradient-to-br from-emerald-400 to-green-600 text-white rounded-lg p-2">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gradient-to-r from-white to-white/90 rounded-xl p-4 shadow-soft-2xl">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-slate-500">Hours Worked</div>
+                                            <div id="kpiHours" class="text-2xl font-extrabold mt-2">—</div>
+                                        </div>
+                                        <div class="bg-gradient-to-br from-indigo-400 to-violet-600 text-white rounded-lg p-2">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="bg-gradient-to-r from-white to-white/90 rounded-xl p-4 shadow-soft-2xl">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <div class="text-sm text-slate-500">Recent Revenue</div>
+                                            <div id="kpiRevenue" class="text-2xl font-extrabold mt-2">—</div>
+                                        </div>
+                                        <div class="bg-gradient-to-br from-purple-400 to-indigo-600 text-white rounded-lg p-2">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col card shadow-soft-xl rounded-xl p-4">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Revenue Trend (You)</h3>
+                        <p class="chart-subtitle">Recent sales revenue over time</p>
+                    </div>
+                    <div class="chart-area"><canvas id="revenueTrend" style="width:100%;height:100%;"></canvas></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col card">
+                    <h4 class="small">Top products (by revenue)</h4>
+                    <div class="chart-area small"><canvas id="topProducts" style="width:100%;height:100%;"></canvas></div>
+                </div>
+                <div class="col card shadow-soft-xl rounded-xl p-4">
+                    <h4 class="small">Recent Sales</h4>
+                    <div style="margin:0.5rem 0 1rem 0;">
+                        <input id="recentSalesSearch" class="search-input" type="search" placeholder="Search by product, city or sale id..." />
+                    </div>
+                    <div id="recentSalesContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="message" class="card empty" style="display:none"></div>
+    </div>
+
+    <script>
+    const loginHint = document.getElementById('loginHint');
+        const dashboardArea = document.getElementById('dashboardArea');
+        const msg = document.getElementById('message');
+
+        let empId = null;
+        let revenueTrendChart = null;
+        let topProductsChart = null;
+
+        // Auto-login if employee info is stored from unified login
+        (function tryAutoLogin(){
+            try {
+                const stored = localStorage.getItem('employee');
+                if (stored) {
+                    const emp = JSON.parse(stored);
+                    empId = emp.id;
+                    document.getElementById('empName').textContent = emp.first_name + ' ' + (emp.last_name||'');
+                    dashboardArea.style.display = 'block';
+                    loadEmployeeStats(empId).catch(()=>{});
+                    // hide the login hint when already logged in
+                    if (loginHint) loginHint.style.display = 'none';
+                    return;
+                }
+            } catch(e){}
+
+            // No stored employee — show hint directing user to unified login
+            if (loginHint) loginHint.style.display = 'block';
+            showMessage('Please sign in via the unified login to view your dashboard.');
+        })();
+
+        function showMessage(text, hide=false){
+            if(!text){ msg.style.display='none'; return; }
+            msg.style.display='block'; msg.textContent = text; if(hide) msg.style.display='none';
+        }
+
+        async function loadEmployeeStats(id){
+            showMessage('Loading your stats...', false);
+            try {
+                const r = await fetch(`http://localhost:5000/employee/${id}/stats`);
+                if (!r.ok) { showMessage('Failed to load stats'); return; }
+                const j = await r.json();
+                const emp = j.employee;
+                document.getElementById('kpiSalary').textContent = emp.salary!=null ? '$'+Number(emp.salary).toFixed(2) : '—';
+                document.getElementById('kpiHours').textContent = emp.hours_worked!=null ? Number(emp.hours_worked).toFixed(1) : '—';
+
+                const sales = emp.recent_sales || [];
+                const totalRevenue = sales.reduce((s,x)=>s + (Number(x.revenue)||0), 0);
+                document.getElementById('kpiRevenue').textContent = '$'+totalRevenue.toFixed(2);
+
+                renderRecentSales(sales);
+                renderRevenueTrend(sales);
+                renderTopProducts(sales);
+                showMessage('', true);
+            } catch (e){
+                showMessage('Error loading stats');
+            }
+        }
+
+        function renderRecentSales(sales){
+            const container = document.getElementById('recentSalesContainer');
+            if (!sales || sales.length===0){ container.innerHTML = '<div class="empty">No recent sales</div>'; return; }
+            let html = '<table><thead><tr><th>Sale</th><th>Date</th><th>Product</th><th>Qty</th><th>Revenue</th></tr></thead><tbody>';
+            for (const s of sales){
+                html += `<tr><td>#${s.sale_id}</td><td>${new Date(s.date).toLocaleDateString()}</td><td>${escapeHtml(s.product)}</td><td>${s.quantity}</td><td>$${Number(s.revenue||0).toFixed(2)}</td></tr>`;
+            }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function renderRevenueTrend(sales){
+            const ctx = document.getElementById('revenueTrend').getContext('2d');
+            // aggregate revenue by date (day)
+            const map = {};
+            for (const s of sales){
+                const d = (new Date(s.date)).toISOString().slice(0,10);
+                map[d] = (map[d]||0) + (Number(s.revenue)||0);
+            }
+            const labels = Object.keys(map).sort();
+            const data = labels.map(l=>map[l]);
+            if (revenueTrendChart) revenueTrendChart.destroy();
+            revenueTrendChart = new Chart(ctx, {
+                type:'line',
+                data:{ labels, datasets:[{ label:'Revenue', data, borderColor:'#059669', backgroundColor:'rgba(5,150,105,0.12)', fill:true, tension:0.3, pointRadius:4 }] },
+                options:{
+                    responsive:true,
+                    maintainAspectRatio:false,
+                    animation: { duration: 900, easing: 'easeOutQuart' },
+                    plugins:{ legend:{display:false}},
+                    scales:{ y:{ beginAtZero:true, ticks:{ callback: v => '$' + Number(v).toLocaleString() } } }
+                }
+            });
+        }
+
+        function renderTopProducts(sales){
+            const ctx = document.getElementById('topProducts').getContext('2d');
+            const map = {};
+            for (const s of sales){ map[s.product] = (map[s.product]||0) + (Number(s.revenue)||0); }
+            const items = Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,6);
+            const labels = items.map(i=>i[0]);
+            const data = items.map(i=>i[1]);
+            if (topProductsChart) topProductsChart.destroy();
+            topProductsChart = new Chart(ctx, {
+                type:'bar',
+                data:{ labels, datasets:[{ label:'Revenue', data, backgroundColor:'#4f46e5' }] },
+                options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, animation:{ duration:700, easing:'easeOutQuad' }, plugins:{ legend:{display:false} }, scales:{ x:{ ticks:{ callback: v => '$' + Number(v).toLocaleString() } } }
+                }
+            });
+        }
+
+        // Recent sales search / filter
+        document.addEventListener('DOMContentLoaded', function(){
+            const search = document.getElementById('recentSalesSearch');
+            if (search){
+                search.addEventListener('input', function(){
+                    const q = this.value.trim().toLowerCase();
+                    const container = document.getElementById('recentSalesContainer');
+                    const rows = container.querySelectorAll('tbody tr');
+                    rows.forEach(r => {
+                        const text = r.textContent.toLowerCase();
+                        r.style.display = q === '' || text.includes(q) ? '' : 'none';
+                    });
+                });
+            }
+        });
+
+        function escapeHtml(str){ if(!str) return ''; return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;'); }
+    </script>
+    <script>
+        // Logout clears stored employee info and redirects
+        document.getElementById('logoutLink').addEventListener('click', function(e){
+            e.preventDefault();
+            try { localStorage.removeItem('employee'); } catch(e){}
+            window.location.href = 'role_select.html';
+        });
+    </script>
+</body>
+</html>

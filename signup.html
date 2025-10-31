@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grocery Inventory Signup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: url('shelfware.png') center/cover no-repeat;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(232, 245, 233, 0.3);
+            z-index: 0;
+        }
+        .login-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255,255,255,0.85);
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(76,175,80,0.15);
+            padding: 40px 32px;
+            width: 100%;
+            max-width: 350px;
+            text-align: center;
+        }
+        .logo {
+            margin-bottom: 16px;
+        }
+        .logo img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(76,175,80,0.15);
+        }
+        h2 {
+            color: #388e3c;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+        input[type="text"], input[type="password"], input[type="email"], select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #43a047;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 16px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #388e3c;
+        }
+        .links {
+            margin-top: 18px;
+            font-size: 14px;
+        }
+        .links a {
+            color: #43a047;
+            text-decoration: none;
+            margin: 0 8px;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        .password-strength {
+            margin-top: 10px;
+            height: 5px;
+            background-color: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            display: none;
+        }
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s;
+            border-radius: 5px;
+        }
+        .strength-weak { background-color: #dc3545; width: 25%; }
+        .strength-medium { background-color: #ffc107; width: 50%; }
+        .strength-good { background-color: #fd7e14; width: 75%; }
+        .strength-strong { background-color: #28a745; width: 100%; }
+        .strength-text {
+            font-size: 12px;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+        .strength-weak-text { color: #dc3545; }
+        .strength-medium-text { color: #ffc107; }
+        .strength-good-text { color: #fd7e14; }
+        .strength-strong-text { color: #28a745; }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="login-container">
+        <div class="logo">
+            <img src="logo.png" alt="Grocery Logo">
+        </div>
+        <h2>Create Customer Account</h2>
+        <div class="success-message" id="successMessage">
+            Account created successfully! Redirecting to login...
+        </div>
+        <form id="signupForm">
+            <!-- Personal Information -->
+            <input type="text" id="firstName" placeholder="First Name" required>
+            <div class="error-message" id="firstNameError"></div>
+            
+            <input type="text" id="middleInitial" placeholder="Middle Initial (Optional)" maxlength="1">
+            <div class="error-message" id="middleInitialError"></div>
+            
+            <input type="text" id="lastName" placeholder="Last Name" required>
+            <div class="error-message" id="lastNameError"></div>
+            
+            <!-- Address Information -->
+            <input type="text" id="address" placeholder="Full Address" required>
+            <div class="error-message" id="addressError"></div>
+            
+            <select id="cityId" required>
+                <option value="">Select Your City</option>
+            </select>
+            <div class="error-message" id="cityIdError"></div>
+            
+            <!-- Account Information -->
+            <input type="text" id="username" placeholder="Username (will be your login)" required>
+            <div class="error-message" id="usernameError"></div>
+            
+            <input type="password" id="password" placeholder="Password" required>
+            <div class="password-strength" id="passwordStrength">
+                <div class="strength-bar" id="strengthBar"></div>
+            </div>
+            <div class="strength-text" id="strengthText"></div>
+            <div class="error-message" id="passwordError"></div>
+            
+            <input type="password" id="confirmPassword" placeholder="Confirm Password" required>
+            <div class="error-message" id="confirmPasswordError"></div>
+            
+            <button type="submit">Create Account</button>
+        </form>
+        <div class="links">
+            <a href="customer_login.html" id="loginLink">Already have an account? Login</a>
+        </div>
+    </div>
+    <script>
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            const strengthBar = document.getElementById('strengthBar');
+            const strengthText = document.getElementById('strengthText');
+            const passwordStrength = document.getElementById('passwordStrength');
+            if (password.length === 0) {
+                passwordStrength.style.display = 'none';
+                strengthText.textContent = '';
+                return;
+            }
+            passwordStrength.style.display = 'block';
+            let score = 0;
+            let feedback = [];
+            if (password.length >= 8) score++; else feedback.push('at least 8 characters');
+            if (/[A-Z]/.test(password)) score++; else feedback.push('uppercase letter');
+            if (/[a-z]/.test(password)) score++; else feedback.push('lowercase letter');
+            if (/\d/.test(password)) score++; else feedback.push('number');
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++; else feedback.push('special character');
+            strengthBar.className = 'strength-bar';
+            strengthText.className = 'strength-text';
+            switch (score) {
+                case 0:
+                case 1:
+                    strengthBar.classList.add('strength-weak');
+                    strengthText.classList.add('strength-weak-text');
+                    strengthText.textContent = 'Weak - Add: ' + feedback.slice(0, 2).join(', ');
+                    break;
+                case 2:
+                case 3:
+                    strengthBar.classList.add('strength-medium');
+                    strengthText.classList.add('strength-medium-text');
+                    strengthText.textContent = 'Medium - Add: ' + feedback.slice(0, 1).join(', ');
+                    break;
+                case 4:
+                    strengthBar.classList.add('strength-good');
+                    strengthText.classList.add('strength-good-text');
+                    strengthText.textContent = 'Good - Almost there!';
+                    break;
+                case 5:
+                    strengthBar.classList.add('strength-strong');
+                    strengthText.classList.add('strength-strong-text');
+                    strengthText.textContent = 'Strong password!';
+                    break;
+            }
+            return score;
+        }
+        // Form validation
+        function validateForm() {
+            const firstName = document.getElementById('firstName').value.trim();
+            const middleInitial = document.getElementById('middleInitial').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const address = document.getElementById('address').value.trim();
+            const cityId = document.getElementById('cityId').value;
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            let isValid = true;
+            
+            // Error elements
+            const firstNameError = document.getElementById('firstNameError');
+            const middleInitialError = document.getElementById('middleInitialError');
+            const lastNameError = document.getElementById('lastNameError');
+            const addressError = document.getElementById('addressError');
+            const cityIdError = document.getElementById('cityIdError');
+            const usernameError = document.getElementById('usernameError');
+            const passwordError = document.getElementById('passwordError');
+            const confirmPasswordError = document.getElementById('confirmPasswordError');
+            
+            // Reset errors
+            [firstNameError, middleInitialError, lastNameError, addressError, cityIdError, 
+             usernameError, passwordError, confirmPasswordError].forEach(el => {
+                el.style.display = 'none';
+            });
+            
+            // First Name
+            if (firstName.length < 2) {
+                firstNameError.textContent = 'First name must be at least 2 characters';
+                firstNameError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // Middle Initial (optional but if provided, must be 1 character)
+            if (middleInitial && middleInitial.length !== 1) {
+                middleInitialError.textContent = 'Middle initial must be 1 character';
+                middleInitialError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // Last Name
+            if (lastName.length < 2) {
+                lastNameError.textContent = 'Last name must be at least 2 characters';
+                lastNameError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // Address
+            if (address.length < 10) {
+                addressError.textContent = 'Please enter a complete address';
+                addressError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // City ID
+            if (!cityId || cityId < 1 || cityId > 100) {
+                cityIdError.textContent = 'City ID must be between 1 and 100';
+                cityIdError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // Username
+            if (username.length < 3) {
+                usernameError.textContent = 'Username must be at least 3 characters';
+                usernameError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // Password
+            if (password.length < 6) {
+                passwordError.textContent = 'Password must be at least 6 characters';
+                passwordError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // Confirm Password
+            if (confirmPassword !== password) {
+                confirmPasswordError.textContent = 'Passwords do not match';
+                confirmPasswordError.style.display = 'block';
+                isValid = false;
+            }
+            
+            // Strong password check
+            if (checkPasswordStrength(password) < 3) {
+                passwordError.textContent = 'Password should be stronger (see above)';
+                passwordError.style.display = 'block';
+                isValid = false;
+            }
+            
+            return isValid;
+        }
+        
+        // Username availability checker
+        let usernameCheckTimeout;
+        document.getElementById('username').addEventListener('input', function() {
+            const username = this.value.trim();
+            const usernameError = document.getElementById('usernameError');
+            
+            clearTimeout(usernameCheckTimeout);
+            
+            if (username.length >= 3) {
+                usernameCheckTimeout = setTimeout(() => {
+                    fetch('http://localhost:5000/check-username', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.available) {
+                            usernameError.textContent = data.message;
+                            usernameError.style.display = 'block';
+                        } else {
+                            usernameError.style.display = 'none';
+                        }
+                    })
+                    .catch(() => {
+                        // Ignore error - API might not be running during development
+                    });
+                }, 500);
+            }
+        });
+        
+        document.getElementById('password').addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+        });
+
+        // Load cities when page loads
+        async function loadCities() {
+            try {
+                const response = await fetch('http://localhost:5000/cities');
+                const data = await response.json();
+                const citySelect = document.getElementById('cityId');
+                
+                data.cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.id;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error loading cities:', error);
+                // Fallback: show input field if cities can't be loaded
+                const citySelect = document.getElementById('cityId');
+                citySelect.outerHTML = '<input type="number" id="cityId" placeholder="City ID (1-96)" min="1" max="96" required>';
+            }
+        }
+
+        // Load cities when page loads
+        window.addEventListener('load', loadCities);
+        
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateForm()) {
+                return;
+            }
+            
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.textContent;
+            submitButton.textContent = 'Creating Account...';
+            submitButton.disabled = true;
+            
+            const formData = {
+                firstName: document.getElementById('firstName').value.trim(),
+                middleInitial: document.getElementById('middleInitial').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                address: document.getElementById('address').value.trim(),
+                cityId: document.getElementById('cityId').value,
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value
+            };
+            
+            fetch('http://localhost:5000/customer-signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('successMessage').style.display = 'block';
+                    this.style.display = 'none';
+                    setTimeout(() => {
+                        window.location.href = 'customer_login.html';
+                    }, 2000);
+                } else {
+                    alert('Signup failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Signup error:', error);
+                alert('Signup failed. Please make sure the signup API is running.');
+            })
+            .finally(() => {
+                submitButton.textContent = originalText;
+                submitButton.disabled = false;
+            });
+        });
+        // "Already have an account? Login" always goes to normal login page
+        document.getElementById('loginLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            window.location.href = 'customer_login.html';
+        });
+    </script>
+</body>
+</html>
